@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,6 +28,14 @@ public class RegisterActivity extends AppCompatActivity {
         usernameInput = findViewById(R.id.input_username);
         passwordInput = findViewById(R.id.input_password);
         registerButton = findViewById(R.id.button_register);
+
+        TextView goToLogin = findViewById(R.id.text_go_to_login);
+        goToLogin.setOnClickListener(v -> {
+            startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
+            finish();
+        });
+
+
 
         registerButton.setOnClickListener(v -> {
             String username = usernameInput.getText().toString().trim();
@@ -65,7 +74,12 @@ public class RegisterActivity extends AppCompatActivity {
                     startActivity(new Intent(this, LoginActivity.class));
                     finish();
                 });
+
             });
+
         });
+
+
     }
+
 }
