@@ -14,6 +14,12 @@ import com.budgetwise.campusexpensemanager.models.Account;
 import java.util.List;
 import java.util.concurrent.Executors;
 
+import android.content.Intent;
+import android.widget.Button;
+import android.widget.TextView;
+import com.budgetwise.campusexpensemanager.utils.SessionManager;
+
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -21,8 +27,24 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
 
+        // Session setup
+        SessionManager session = new SessionManager(getApplicationContext());
+        String username = session.getUsername();
+
+        TextView textUsername = findViewById(R.id.text_username);
+        textUsername.setText(username != null ? "Welcome, " + username + "!" : "Welcome!");
+
+        Button logoutButton = findViewById(R.id.btnLogout);
+        logoutButton.setOnClickListener(v -> {
+            session.logout();
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
+
+        // Optional DB logging & WAL checkpoint
         Executors.newSingleThreadExecutor().execute(() -> {
-            // ✅ Log accounts for testing
             List<Account> accounts = DatabaseClient.getInstance(getApplicationContext())
                     .getAppDatabase()
                     .accountDao()
@@ -32,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("ACCOUNT_CHECK", "ID: " + acc.id + ", Username: " + acc.username);
             }
 
-            // ✅ WAL checkpoint using Room-safe rawQuery
             SupportSQLiteQuery query = new SimpleSQLiteQuery("PRAGMA wal_checkpoint(FULL)");
             DatabaseClient.getInstance(getApplicationContext())
                     .getAppDatabase()
@@ -42,4 +63,5 @@ public class MainActivity extends AppCompatActivity {
             Log.d("DB_EXPORT", "WAL checkpoint complete (via rawQuery)");
         });
     }
+
 }

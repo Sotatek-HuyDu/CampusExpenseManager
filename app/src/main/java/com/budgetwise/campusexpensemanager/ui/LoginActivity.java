@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.budgetwise.campusexpensemanager.R;
 import com.budgetwise.campusexpensemanager.database.DatabaseClient;
 import com.budgetwise.campusexpensemanager.models.Account;
+import com.budgetwise.campusexpensemanager.utils.SessionManager;
 
 import java.util.concurrent.Executors;
 
@@ -30,6 +31,15 @@ public class LoginActivity extends AppCompatActivity {
         passwordInput = findViewById(R.id.input_password);
         loginButton = findViewById(R.id.button_login);
         goToRegister = findViewById(R.id.text_register);
+
+        // Auto-login if session exists
+        SessionManager session = new SessionManager(getApplicationContext());
+        if (session.isLoggedIn()) {
+            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
 
         loginButton.setOnClickListener(v -> {
             String username = usernameInput.getText().toString().trim();
@@ -50,9 +60,12 @@ public class LoginActivity extends AppCompatActivity {
                     if (user == null || !user.password.equals(password)) {
                         Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
                     } else {
+                        // ✅ Save session on successful login
+                        session.login(user.username);
+
                         Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(this, MainActivity.class);
-                        intent.putExtra("accountId", user.id); // if needed later
+                        intent.putExtra("accountId", user.id); // optional
                         startActivity(intent);
                         finish();
                     }
