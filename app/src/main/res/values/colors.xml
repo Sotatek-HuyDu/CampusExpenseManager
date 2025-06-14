@@ -1,5 +1,18 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="primaryText">#333333</color>
+    <color name="hintBorder">#CCCCCC</color>
+    <color name="backgroundWhite">#FFFFFF</color>
+    <color name="linkBlue">#1976D2</color>
+    <color name="primary">#2C3E50</color>
+    <color name="onPrimary">#FFFFFF</color>
+    <color name="navBackground">#2C3E50</color>
+    <color name="navText">#333333</color>
+    <color name="navIcon">#333333</color>
+    <color name="nav_selected">#999999</color>
+    <color name="nav_unselected">#FFFFFF</color>
+    <color name="drawer_background">#FAFAFA</color>
+    <color name="accent">#E67E22</color>
+    <color name="background">#FFFFFF</color>
+    <color name="textPrimary">#333333</color>
+    <color name="hintText">#999999</color>
 </resources>

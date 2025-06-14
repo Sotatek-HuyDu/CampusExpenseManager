@@ -5,48 +5,32 @@
     android:gravity="center"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="@color/backgroundWhite">
 
     <TextView
         android:id="@+id/text_title"
-        android:text="Campus Expense Manager"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="#333333"
-        android:layout_marginBottom="32dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        style="@style/LoginTitleText"
+        android:text="Campus Expense Manager" />
 
     <EditText
         android:id="@+id/input_username"
-        android:hint="Username"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:backgroundTint="#CCCCCC" />
+        style="@style/LoginInput"
+        android:hint="Username" />
 
     <EditText
         android:id="@+id/input_password"
+        style="@style/LoginInput"
         android:hint="Password"
         android:inputType="textPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="#CCCCCC" />
+        android:layout_marginTop="16dp" />
 
     <Button
         android:id="@+id/button_login"
-        android:text="Login"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp" />
+        style="@style/LoginButton"
+        android:text="Login" />
 
     <TextView
         android:id="@+id/text_register"
-        android:text="Don't have an account? Register here"
-        android:textColor="@android:color/holo_blue_dark"
-        android:textSize="14sp"
-        android:layout_marginTop="16dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        style="@style/LoginLinkText"
+        android:text="Don't have an account? Register here" />
 </LinearLayout>

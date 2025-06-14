@@ -5,52 +5,33 @@
     android:gravity="center"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="@color/backgroundWhite">
 
     <TextView
         android:id="@+id/text_register_title"
-        android:text="Create Account"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="#333333"
-        android:layout_marginBottom="32dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        style="@style/RegisterTitleText"
+        android:text="Create Account" />
 
     <EditText
         android:id="@+id/input_username"
+        style="@style/LoginInput"
         android:hint="Username"
-        android:inputType="text"
-        android:minHeight="48dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:backgroundTint="#CCCCCC" />
+        android:inputType="text" />
 
     <EditText
         android:id="@+id/input_password"
+        style="@style/LoginInput"
         android:hint="Password"
         android:inputType="textPassword"
-        android:minHeight="48dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="#CCCCCC" />
+        android:layout_marginTop="16dp" />
 
     <Button
         android:id="@+id/button_register"
-        android:text="Register"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp" />
+        style="@style/LoginButton"
+        android:text="Register" />
 
     <TextView
         android:id="@+id/text_go_to_login"
-        android:text="Already have an account? Login here"
-        android:textColor="@android:color/holo_blue_dark"
-        android:textSize="14sp"
-        android:layout_marginTop="16dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
+        style="@style/LoginLinkText"
+        android:text="Already have an account? Login here" />
 </LinearLayout>
