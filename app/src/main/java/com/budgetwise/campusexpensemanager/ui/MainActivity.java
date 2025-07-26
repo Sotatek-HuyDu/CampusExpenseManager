@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.widget.TextView;
 import androidx.core.view.GravityCompat;
+import com.budgetwise.campusexpensemanager.notifications.RecurringExpenseService;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -89,6 +90,18 @@ public class MainActivity extends BaseActivity {
             Log.d("DB_EXPORT", "WAL checkpoint complete (via rawQuery)");
         });
         */
+
+        // Start recurring expense service
+        startRecurringExpenseService();
+    }
+
+    private void startRecurringExpenseService() {
+        Intent serviceIntent = new Intent(this, RecurringExpenseService.class);
+        String accountId = sessionManager.getAccountId();
+        if (accountId != null) {
+            serviceIntent.putExtra("account_id", accountId);
+        }
+        startService(serviceIntent);
     }
     
 

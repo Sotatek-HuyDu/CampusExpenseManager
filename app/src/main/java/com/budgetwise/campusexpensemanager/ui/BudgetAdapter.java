@@ -13,11 +13,15 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.budgetwise.campusexpensemanager.R;
 import com.budgetwise.campusexpensemanager.firebase.models.FirebaseBudget;
+import com.budgetwise.campusexpensemanager.firebase.models.FirebaseRecurringExpense;
 import com.budgetwise.campusexpensemanager.firebase.ExpenseRepository;
+import com.budgetwise.campusexpensemanager.firebase.repository.RecurringExpenseRepository;
 import com.budgetwise.campusexpensemanager.utils.CategoryColorUtil;
 import com.budgetwise.campusexpensemanager.utils.CategoryIconUtil;
+import com.budgetwise.campusexpensemanager.notifications.RecurringExpenseProcessor;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
+import java.util.Calendar;
 import java.util.List;
 
 public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetViewHolder> {
@@ -25,11 +29,13 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
     private List<FirebaseBudget> budgets;
     private Context context;
     private ExpenseRepository expenseRepository;
+    private RecurringExpenseRepository recurringExpenseRepository;
 
     public BudgetAdapter(Context context, List<FirebaseBudget> budgets) {
         this.context = context;
         this.budgets = budgets;
         this.expenseRepository = new ExpenseRepository();
+        this.recurringExpenseRepository = new RecurringExpenseRepository();
     }
 
     @NonNull
@@ -129,26 +135,8 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
                         }
                     }
                     
-                    final double remainingAmount = budget.getLimit() - spentAmount[0];
-                    final int progress = (int) ((spentAmount[0] / budget.getLimit()) * 100);
-                    
-                    // Update UI on main thread
-                    ((android.app.Activity) context).runOnUiThread(() -> {
-                        spentAmountTextView.setText(String.format("Spent: $%.2f", spentAmount[0]));
-                        remainingAmountTextView.setText(String.format("Remaining: $%.2f", remainingAmount));
-                        
-                        // Set progress
-                        progressIndicator.setProgress(progress);
-                        
-                        // Set progress color based on usage
-                        if (progress > 90) {
-                            progressIndicator.setIndicatorColor(context.getResources().getColor(android.R.color.holo_red_dark));
-                        } else if (progress > 75) {
-                            progressIndicator.setIndicatorColor(context.getResources().getColor(android.R.color.holo_orange_dark));
-                        } else {
-                            progressIndicator.setIndicatorColor(categoryColor);
-                        }
-                    });
+                    // Now add recurring expenses for this category and month
+                    addRecurringExpensesToSpentAmount(budget, spentAmount, categoryColor);
                 }
                 
                 @Override
@@ -156,6 +144,110 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
                     android.util.Log.e("BudgetAdapter", "Error loading expenses: " + databaseError.getMessage());
                 }
             });
+        }
+        
+        private void addRecurringExpensesToSpentAmount(FirebaseBudget budget, final double[] spentAmount, int categoryColor) {
+            android.util.Log.d("BudgetAdapter", "Loading recurring expenses for account: " + budget.getAccountId() + 
+                ", category: " + budget.getCategory() + ", month: " + budget.getMonth() + ", year: " + budget.getYear());
+            
+            recurringExpenseRepository.getRecurringExpensesByAccount(budget.getAccountId())
+                .addValueEventListener(new com.google.firebase.database.ValueEventListener() {
+                    @Override
+                    public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
+                        final double[] recurringAmount = {0.0};
+                        
+                        android.util.Log.d("BudgetAdapter", "Found " + dataSnapshot.getChildrenCount() + " recurring expenses");
+                        
+                        for (com.google.firebase.database.DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            FirebaseRecurringExpense recurringExpense = snapshot.getValue(FirebaseRecurringExpense.class);
+                            android.util.Log.d("BudgetAdapter", "Checking recurring expense: " + 
+                                (recurringExpense != null ? recurringExpense.getDescription() : "null") + 
+                                ", category: " + (recurringExpense != null ? recurringExpense.getCategory() : "null"));
+                            
+                            if (recurringExpense != null && 
+                                recurringExpense.getCategory().equals(budget.getCategory())) {
+                                // Check if this recurring expense should create an expense in the target month
+                                if (shouldCreateExpenseInMonth(recurringExpense, budget.getMonth(), budget.getYear())) {
+                                    recurringAmount[0] += recurringExpense.getAmount();
+                                    android.util.Log.d("BudgetAdapter", "Added recurring expense: " + 
+                                        recurringExpense.getDescription() + " ($" + recurringExpense.getAmount() + 
+                                        ") to budget for " + budget.getCategory());
+                                } else {
+                                    android.util.Log.d("BudgetAdapter", "Skipped recurring expense: " + 
+                                        recurringExpense.getDescription() + " for budget " + budget.getCategory() + 
+                                        " (month: " + budget.getMonth() + ", year: " + budget.getYear() + ")");
+                                }
+                            }
+                        }
+                        
+                        // Add recurring amount to total spent
+                        android.util.Log.d("BudgetAdapter", "Final recurring amount: $" + recurringAmount[0]);
+                        spentAmount[0] += recurringAmount[0];
+                        
+                        final double remainingAmount = budget.getLimit() - spentAmount[0];
+                        final int progress = (int) ((spentAmount[0] / budget.getLimit()) * 100);
+                        
+                        // Update UI on main thread
+                        ((android.app.Activity) context).runOnUiThread(() -> {
+                            String spentText = String.format("Spent: $%.2f", spentAmount[0]);
+                            if (recurringAmount[0] > 0) {
+                                spentText += String.format(" (%.0f recurring)", recurringAmount[0]);
+                            }
+                            spentAmountTextView.setText(spentText);
+                            remainingAmountTextView.setText(String.format("Remaining: $%.2f", remainingAmount));
+                            
+                            // Set progress
+                            progressIndicator.setProgress(progress);
+                            
+                            // Set progress color based on usage
+                            if (progress > 90) {
+                                progressIndicator.setIndicatorColor(context.getResources().getColor(android.R.color.holo_red_dark));
+                            } else if (progress > 75) {
+                                progressIndicator.setIndicatorColor(context.getResources().getColor(android.R.color.holo_orange_dark));
+                            } else {
+                                progressIndicator.setIndicatorColor(categoryColor);
+                            }
+                        });
+                    }
+                    
+                    @Override
+                    public void onCancelled(com.google.firebase.database.DatabaseError databaseError) {
+                        android.util.Log.e("BudgetAdapter", "Error loading recurring expenses: " + databaseError.getMessage());
+                    }
+                });
+        }
+        
+        private boolean shouldCreateExpenseInMonth(FirebaseRecurringExpense recurringExpense, int month, int year) {
+            android.util.Log.d("BudgetAdapter", "Checking if should create expense for: " + recurringExpense.getDescription() + 
+                " in month: " + month + ", year: " + year);
+            
+            if (recurringExpense.getStartDate() == null || recurringExpense.getEndDate() == null) {
+                android.util.Log.d("BudgetAdapter", "Skipping - null dates");
+                return false;
+            }
+            
+            Calendar startDate = Calendar.getInstance();
+            Calendar endDate = Calendar.getInstance();
+            
+            startDate.setTime(recurringExpense.getStartDate());
+            endDate.setTime(recurringExpense.getEndDate());
+            
+            android.util.Log.d("BudgetAdapter", "Start date: " + startDate.getTime() + 
+                ", End date: " + endDate.getTime() + 
+                ", Target month: " + month + "/" + year);
+            
+            // Simple logic: if the recurring expense is active in the target month, include it
+            // Check if the start date is before or in the target month, and end date is after or in the target month
+            Calendar targetMonthStart = Calendar.getInstance();
+            targetMonthStart.set(year, month - 1, 1, 0, 0, 0); // First day of target month
+            
+            Calendar targetMonthEnd = Calendar.getInstance();
+            targetMonthEnd.set(year, month - 1, targetMonthStart.getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59); // Last day of target month
+            
+            boolean shouldInclude = !startDate.after(targetMonthEnd) && !endDate.before(targetMonthStart);
+            
+            android.util.Log.d("BudgetAdapter", "Date range check - shouldInclude: " + shouldInclude);
+            return shouldInclude;
         }
         
         private boolean isExpenseInMonth(com.budgetwise.campusexpensemanager.firebase.models.FirebaseExpense expense, int month, int year) {

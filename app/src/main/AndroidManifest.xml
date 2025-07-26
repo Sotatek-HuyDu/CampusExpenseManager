@@ -45,6 +45,16 @@
         <activity
             android:name=".ui.ExpenseActivity"
             android:theme="@style/Theme.CampusExpenseManager" />
+        <activity
+            android:name=".ui.RecurringExpenseActivity"
+            android:theme="@style/Theme.CampusExpenseManager" />
+        <activity
+            android:name=".ui.AddEditRecurringExpenseActivity"
+            android:theme="@style/Theme.CampusExpenseManager" />
+
+        <service
+            android:name=".notifications.RecurringExpenseService"
+            android:exported="false" />
 
     </application>
 
