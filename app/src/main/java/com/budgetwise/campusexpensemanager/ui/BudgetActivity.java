@@ -16,6 +16,7 @@ import com.budgetwise.campusexpensemanager.R;
 import com.budgetwise.campusexpensemanager.firebase.repository.BudgetRepository;
 import com.budgetwise.campusexpensemanager.firebase.models.FirebaseBudget;
 import com.budgetwise.campusexpensemanager.utils.SessionManager;
+import com.budgetwise.campusexpensemanager.notifications.RecurringExpenseProcessor;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -36,6 +37,7 @@ public class BudgetActivity extends BaseActivity {
     private BudgetAdapter budgetAdapter;
     private BudgetRepository budgetRepository;
     private SessionManager sessionManager;
+    private RecurringExpenseProcessor recurringExpenseProcessor;
     
     private int selectedMonth;
     private int selectedYear;
@@ -51,6 +53,7 @@ public class BudgetActivity extends BaseActivity {
         // Initialize repositories
         budgetRepository = new BudgetRepository();
         sessionManager = new SessionManager(this);
+        recurringExpenseProcessor = new RecurringExpenseProcessor();
         budgets = new ArrayList<>();
 
         // Initialize views
@@ -82,6 +85,9 @@ public class BudgetActivity extends BaseActivity {
 
         // Load budgets for current month/year
         loadBudgets();
+        
+        // Process recurring expenses to ensure they're included in budget calculations
+        processRecurringExpenses();
     }
 
     private void setupToolbar() {
@@ -228,5 +234,13 @@ public class BudgetActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         loadBudgets();
+        processRecurringExpenses();
+    }
+    
+    private void processRecurringExpenses() {
+        String accountId = sessionManager.getAccountId();
+        if (accountId != null) {
+            recurringExpenseProcessor.processRecurringExpenses(accountId);
+        }
     }
 } 

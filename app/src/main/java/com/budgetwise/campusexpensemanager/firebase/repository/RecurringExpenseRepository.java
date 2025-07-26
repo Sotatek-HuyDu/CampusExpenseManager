@@ -26,6 +26,10 @@ public class RecurringExpenseRepository extends FirebaseRepository {
                 .equalTo(accountId);
     }
     
+    public DatabaseReference getRecurringExpenseById(String id) {
+        return getChildReference(COLLECTION_NAME, id);
+    }
+    
     public Task<Void> delete(FirebaseRecurringExpense recurringExpense) {
         return getChildReference(COLLECTION_NAME, recurringExpense.getId()).removeValue();
     }

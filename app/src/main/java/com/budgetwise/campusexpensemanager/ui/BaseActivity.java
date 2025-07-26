@@ -49,6 +49,13 @@ public abstract class BaseActivity extends AppCompatActivity {
                         finish();
                     }
                     return true;
+                } else if (id == R.id.nav_recurring) {
+                    if (!(this instanceof RecurringExpenseActivity)) {
+                        Intent intent = new Intent(this, RecurringExpenseActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                    return true;
                 } else if (id == R.id.nav_budget) {
                     if (!(this instanceof BudgetActivity)) {
                         Intent intent = new Intent(this, BudgetActivity.class);
@@ -74,6 +81,8 @@ public abstract class BaseActivity extends AppCompatActivity {
             bottomNavigationView.setSelectedItemId(R.id.nav_home);
         } else if (this instanceof ExpenseActivity) {
             bottomNavigationView.setSelectedItemId(R.id.nav_expenses);
+        } else if (this instanceof RecurringExpenseActivity) {
+            bottomNavigationView.setSelectedItemId(R.id.nav_recurring);
         } else if (this instanceof BudgetActivity) {
             bottomNavigationView.setSelectedItemId(R.id.nav_budget);
         }

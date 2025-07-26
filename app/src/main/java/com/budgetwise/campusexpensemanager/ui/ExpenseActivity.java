@@ -14,6 +14,7 @@ import com.budgetwise.campusexpensemanager.utils.SessionManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.appcompat.widget.Toolbar;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -57,7 +58,7 @@ public class ExpenseActivity extends BaseActivity {
             startActivity(intent);
         });
 
-        // Load expenses
+        // Load expenses (excluding recurring expenses which are shown in the Recurring tab)
         loadExpenses();
     }
 
@@ -65,7 +66,7 @@ public class ExpenseActivity extends BaseActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Expenses");
+            getSupportActionBar().setTitle("Manual Expenses");
         }
     }
 
@@ -77,16 +78,24 @@ public class ExpenseActivity extends BaseActivity {
                 public void onSuccess(List<Expense> expenses) {
                     runOnUiThread(() -> {
                         if (!isFinishing()) {
+                            // Filter out recurring expenses (those with [RECURRING] prefix)
+                            List<Expense> filteredExpenses = new ArrayList<>();
+                            for (Expense expense : expenses) {
+                                if (!expense.getDescription().startsWith("[RECURRING]")) {
+                                    filteredExpenses.add(expense);
+                                }
+                            }
+                            
                             // Sort expenses by date (newest first)
-                            Collections.sort(expenses, (e1, e2) -> {
+                            Collections.sort(filteredExpenses, (e1, e2) -> {
                                 if (e1.getDate() == null && e2.getDate() == null) return 0;
                                 if (e1.getDate() == null) return 1;
                                 if (e2.getDate() == null) return -1;
                                 return e2.getDate().compareTo(e1.getDate());
                             });
 
-                            expenseAdapter.updateExpenses(expenses);
-                            updateEmptyState(expenses.isEmpty());
+                            expenseAdapter.updateExpenses(filteredExpenses);
+                            updateEmptyState(filteredExpenses.isEmpty());
                         }
                     });
                 }
