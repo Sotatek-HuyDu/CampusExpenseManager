@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
 
     <!-- Main Content Area -->
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -14,7 +14,10 @@
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/top_toolbar"
             style="@style/AppToolbar"
-            app:title="CampusExpense Manager" />
+            app:title="CampusExpense Manager"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <!-- Main Screen Content -->
         <TextView
@@ -22,20 +25,29 @@
             style="@style/DashboardContentText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Main screen content placeholder" />
+            android:text="Main screen content placeholder"
+            app:layout_constraintTop_toBottomOf="@id/top_toolbar"
+            app:layout_constraintBottom_toTopOf="@id/bottom_nav"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <!-- Bottom Navigation -->
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottom_nav"
             android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:layout_gravity="bottom"
-
-            app:labelVisibilityMode="unlabeled"
+            android:layout_height="wrap_content"
+            android:background="@android:color/white"
+            android:elevation="8dp"
+            android:outlineProvider="bounds"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:labelVisibilityMode="labeled"
             app:itemIconTint="@color/nav_item_color"
             app:itemTextColor="@color/nav_item_color"
             app:menu="@menu/bottom_nav_menu" />
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Right Drawer Menu -->
     <com.google.android.material.navigation.NavigationView

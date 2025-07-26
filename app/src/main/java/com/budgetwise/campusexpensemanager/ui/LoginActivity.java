@@ -10,17 +10,16 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.budgetwise.campusexpensemanager.R;
-import com.budgetwise.campusexpensemanager.database.DatabaseClient;
-import com.budgetwise.campusexpensemanager.models.Account;
+import com.budgetwise.campusexpensemanager.firebase.FirebaseManager;
+import com.budgetwise.campusexpensemanager.firebase.models.FirebaseAccount;
 import com.budgetwise.campusexpensemanager.utils.SessionManager;
-
-import java.util.concurrent.Executors;
 
 public class LoginActivity extends AppCompatActivity {
 
     EditText usernameInput, passwordInput;
     Button loginButton;
     TextView goToRegister;
+    private FirebaseManager firebaseManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +30,18 @@ public class LoginActivity extends AppCompatActivity {
         passwordInput = findViewById(R.id.input_password);
         loginButton = findViewById(R.id.button_login);
         goToRegister = findViewById(R.id.text_register);
+        
+        // Initialize Firebase manager
+        firebaseManager = FirebaseManager.getInstance();
+        
+        // Enable anonymous authentication
+        com.google.firebase.auth.FirebaseAuth.getInstance().signInAnonymously()
+            .addOnSuccessListener(authResult -> {
+                android.util.Log.d("LoginActivity", "Firebase auth ready");
+            })
+            .addOnFailureListener(e -> {
+                android.util.Log.e("LoginActivity", "Firebase auth failed: " + e.getMessage());
+            });
 
         // Auto-login if session exists
         SessionManager session = new SessionManager(getApplicationContext());
@@ -50,27 +61,57 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            Executors.newSingleThreadExecutor().execute(() -> {
-                Account user = DatabaseClient.getInstance(getApplicationContext())
-                        .getAppDatabase()
-                        .accountDao()
-                        .findByUsername(username);
+            // Add loading indicator
+            loginButton.setEnabled(false);
+            loginButton.setText("Logging in...");
 
-                runOnUiThread(() -> {
-                    if (user == null || !user.password.equals(password)) {
-                        Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
-                    } else {
-                        // ✅ Save session on successful login
-                        session.login(user.username);
+            // Use Singapore region for Firebase
+            com.google.firebase.database.FirebaseDatabase database = com.google.firebase.database.FirebaseDatabase.getInstance("https://campus-expense-manager-c16e3-default-rtdb.asia-southeast1.firebasedatabase.app");
+            
+            // Query for the specific username
+            database.getReference("accounts").orderByChild("username").equalTo(username)
+                .addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
+                    @Override
+                    public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
+                        
+                        if (dataSnapshot.exists()) {
+                            // Check if any account matches both username and password
+                            for (com.google.firebase.database.DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                java.util.Map<String, Object> userData = (java.util.Map<String, Object>) snapshot.getValue();
+                                if (userData != null && userData.get("password").equals(password)) {
+                                    // Login successful
+                                    String accountId = snapshot.getKey(); // Use Firebase key as account ID
+                                    session.login(username, accountId);
 
-                        Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(this, MainActivity.class);
-                        intent.putExtra("accountId", user.id); // optional
-                        startActivity(intent);
-                        finish();
+                                    loginButton.setEnabled(true);
+                                    loginButton.setText("Login");
+                                    Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                    intent.putExtra("accountId", accountId);
+                                    startActivity(intent);
+                                    finish();
+                                    return;
+                                }
+                            }
+                            // Password doesn't match
+                            loginButton.setEnabled(true);
+                            loginButton.setText("Login");
+                            Toast.makeText(LoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                        } else {
+                            // No matching user found
+                            loginButton.setEnabled(true);
+                            loginButton.setText("Login");
+                            Toast.makeText(LoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    
+                    @Override
+                    public void onCancelled(com.google.firebase.database.DatabaseError databaseError) {
+                        loginButton.setEnabled(true);
+                        loginButton.setText("Login");
+                        Toast.makeText(LoginActivity.this, "Login failed: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
-            });
         });
 
         goToRegister.setOnClickListener(v -> {

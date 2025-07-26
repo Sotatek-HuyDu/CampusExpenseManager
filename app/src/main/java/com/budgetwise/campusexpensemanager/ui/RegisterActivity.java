@@ -10,15 +10,14 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.budgetwise.campusexpensemanager.R;
-import com.budgetwise.campusexpensemanager.database.DatabaseClient;
-import com.budgetwise.campusexpensemanager.models.Account;
-
-import java.util.concurrent.Executors;
+import com.budgetwise.campusexpensemanager.firebase.FirebaseManager;
+import com.budgetwise.campusexpensemanager.firebase.models.FirebaseAccount;
 
 public class RegisterActivity extends AppCompatActivity {
 
     EditText usernameInput, passwordInput;
     Button registerButton;
+    private FirebaseManager firebaseManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +27,24 @@ public class RegisterActivity extends AppCompatActivity {
         usernameInput = findViewById(R.id.input_username);
         passwordInput = findViewById(R.id.input_password);
         registerButton = findViewById(R.id.button_register);
+        
+        // Initialize Firebase manager
+        firebaseManager = FirebaseManager.getInstance();
+        
+        // Enable anonymous authentication
+        com.google.firebase.auth.FirebaseAuth.getInstance().signInAnonymously()
+            .addOnSuccessListener(authResult -> {
+                android.util.Log.d("RegisterActivity", "Firebase auth ready");
+            })
+            .addOnFailureListener(e -> {
+                android.util.Log.e("RegisterActivity", "Firebase auth failed: " + e.getMessage());
+            });
+        
+
+        
+
+        
+
 
         TextView goToLogin = findViewById(R.id.text_go_to_login);
         goToLogin.setOnClickListener(v -> {
@@ -46,40 +63,53 @@ public class RegisterActivity extends AppCompatActivity {
                 return;
             }
 
-            Executors.newSingleThreadExecutor().execute(() -> {
-                Account existing = DatabaseClient.getInstance(getApplicationContext())
-                        .getAppDatabase()
-                        .accountDao()
-                        .findByUsername(username);
+            // Add loading indicator
+            registerButton.setEnabled(false);
+            registerButton.setText("Creating Account...");
 
-                if (existing != null) {
-                    runOnUiThread(() ->
-                            Toast.makeText(this, "Username already exists", Toast.LENGTH_SHORT).show()
-                    );
-                    return;
-                }
-
-                Account newAccount = new Account();
-                newAccount.username = username;
-                newAccount.password = password;
-                newAccount.createdAt = System.currentTimeMillis();
-
-                DatabaseClient.getInstance(getApplicationContext())
-                        .getAppDatabase()
-                        .accountDao()
-                        .insert(newAccount);
-
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "Account created!", Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(this, LoginActivity.class));
-                    finish();
-                });
-
-            });
-
+            createNewAccountDirect(username, password);
         });
+    }
+    
 
-
+    
+        private void createNewAccountDirect(String username, String password) {
+        // Add timeout handler
+        android.os.Handler timeoutHandler = new android.os.Handler();
+        Runnable timeoutRunnable = () -> {
+            registerButton.setEnabled(true);
+            registerButton.setText("Register");
+            Toast.makeText(this, "Account creation timed out. Please check your internet connection.", Toast.LENGTH_LONG).show();
+        };
+        
+        // Set 10 second timeout
+        timeoutHandler.postDelayed(timeoutRunnable, 10000);
+        
+        // Create account data
+        java.util.Map<String, Object> accountData = new java.util.HashMap<>();
+        accountData.put("username", username);
+        accountData.put("password", password);
+        accountData.put("createdAt", System.currentTimeMillis());
+        
+        // Use Singapore region for Firebase
+        com.google.firebase.database.FirebaseDatabase database = com.google.firebase.database.FirebaseDatabase.getInstance("https://campus-expense-manager-c16e3-default-rtdb.asia-southeast1.firebasedatabase.app");
+        
+        // Create account in Firebase
+        database.getReference("accounts").child(username).setValue(accountData)
+            .addOnSuccessListener(aVoid -> {
+                timeoutHandler.removeCallbacks(timeoutRunnable);
+                registerButton.setEnabled(true);
+                registerButton.setText("Register");
+                Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, LoginActivity.class));
+                finish();
+            })
+            .addOnFailureListener(e -> {
+                timeoutHandler.removeCallbacks(timeoutRunnable);
+                registerButton.setEnabled(true);
+                registerButton.setText("Register");
+                Toast.makeText(this, "Failed to create account: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
     }
 
 }

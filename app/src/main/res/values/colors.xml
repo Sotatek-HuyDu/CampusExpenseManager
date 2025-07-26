@@ -8,11 +8,23 @@
     <color name="navBackground">#2C3E50</color>
     <color name="navText">#333333</color>
     <color name="navIcon">#333333</color>
-    <color name="nav_selected">#999999</color>
-    <color name="nav_unselected">#FFFFFF</color>
+    <color name="nav_selected">#2196F3</color>
+    <color name="nav_unselected">#757575</color>
     <color name="drawer_background">#FAFAFA</color>
     <color name="accent">#E67E22</color>
     <color name="background">#FFFFFF</color>
     <color name="textPrimary">#333333</color>
     <color name="hintText">#999999</color>
+    
+    <!-- Category Colors -->
+    <color name="category_rent">#FF6B6B</color>
+    <color name="category_groceries">#4ECDC4</color>
+    <color name="category_transportation">#45B7D1</color>
+    <color name="category_utilities">#96CEB4</color>
+    <color name="category_entertainment">#FFEAA7</color>
+    <color name="category_dining">#DDA0DD</color>
+    <color name="category_shopping">#F8BBD9</color>
+    <color name="category_health">#FF8A80</color>
+    <color name="category_education">#81C784</color>
+    <color name="category_other">#BDBDBD</color>
 </resources>

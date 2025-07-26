@@ -1,41 +1,31 @@
 package com.budgetwise.campusexpensemanager.ui;
 
 import android.content.Intent;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.widget.TextView;
 import androidx.core.view.GravityCompat;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.sqlite.db.SimpleSQLiteQuery;
-import androidx.sqlite.db.SupportSQLiteQuery;
-
 import com.budgetwise.campusexpensemanager.R;
-import com.budgetwise.campusexpensemanager.database.DatabaseClient;
-import com.budgetwise.campusexpensemanager.models.Account;
-import com.budgetwise.campusexpensemanager.utils.SessionManager;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 
-import java.util.List;
-import java.util.concurrent.Executors;
-
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
     private DrawerLayout drawerLayout;
     private NavigationView rightDrawer;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_dashboard);
+    protected int getLayoutResourceId() {
+        return R.layout.activity_dashboard;
+    }
+
+    @Override
+    protected void setupActivity() {
 
         // Session setup
-        SessionManager session = new SessionManager(getApplicationContext());
-        String username = session.getUsername();
+        String username = sessionManager.getUsername();
 
         // Setup top toolbar with right-side username
         Toolbar toolbar = findViewById(R.id.top_toolbar);
@@ -65,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
         rightDrawer = findViewById(R.id.right_drawer);
         rightDrawer.setNavigationItemSelectedListener(item -> {
             if (item.getItemId() == R.id.nav_logout) {
-                session.logout();
+                sessionManager.logout();
                 Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
@@ -75,22 +65,11 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        // Setup bottom nav
-        BottomNavigationView bottomNav = findViewById(R.id.bottom_nav);
-        bottomNav.setSelectedItemId(R.id.nav_home);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_home) {
-                // already here
-                return true;
-            } else if (id == R.id.nav_placeholder1 || id == R.id.nav_placeholder2) {
-                // TODO: handle navigation
-                return true;
-            }
-            return false;
-        });
 
-        // DB logging and WAL checkpoint
+
+        // TODO: Remove Room database operations when fully migrated to Firebase
+        // DB logging and WAL checkpoint - temporarily disabled to prevent crashes
+        /*
         Executors.newSingleThreadExecutor().execute(() -> {
             List<Account> accounts = DatabaseClient.getInstance(getApplicationContext())
                     .getAppDatabase()
@@ -109,5 +88,8 @@ public class MainActivity extends AppCompatActivity {
 
             Log.d("DB_EXPORT", "WAL checkpoint complete (via rawQuery)");
         });
+        */
     }
+    
+
 }
