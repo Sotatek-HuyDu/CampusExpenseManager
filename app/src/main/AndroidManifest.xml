@@ -17,23 +17,35 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CampusExpenseManager"
         tools:targetApi="31">
-        <activity android:name=".ui.MainActivity" />
-        <activity android:name=".ui.RegisterActivity" />
-        <activity android:name=".ui.ExpenseActivity" />
-        <activity android:name=".ui.AddEditExpenseActivity" />
-        <activity android:name=".ui.BudgetActivity" />
-        <activity android:name=".ui.AddEditBudgetActivity" />
-        <activity android:name=".ui.LoginActivity"
-            android:exported="true">
+        <activity
+            android:name=".ui.LoginActivity"
+            android:exported="true"
+            android:theme="@style/Theme.CampusExpenseManager">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-
+        <activity
+            android:name=".ui.RegisterActivity"
+            android:theme="@style/Theme.CampusExpenseManager" />
+        <activity
+            android:name=".ui.MainActivity"
+            android:theme="@style/Theme.CampusExpenseManager" />
+        <activity
+            android:name=".ui.AddEditExpenseActivity"
+            android:theme="@style/Theme.CampusExpenseManager" />
+        <activity
+            android:name=".ui.AddEditBudgetActivity"
+            android:theme="@style/Theme.CampusExpenseManager" />
+        <activity
+            android:name=".ui.BudgetActivity"
+            android:theme="@style/Theme.CampusExpenseManager" />
+        <activity
+            android:name=".ui.ExpenseActivity"
+            android:theme="@style/Theme.CampusExpenseManager" />
 
     </application>
-
 
 </manifest>

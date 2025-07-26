@@ -2,6 +2,7 @@ package com.budgetwise.campusexpensemanager.ui;
 
 import android.content.Intent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
@@ -97,8 +98,26 @@ public class BudgetActivity extends BaseActivity {
             "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"
         };
-        ArrayAdapter<String> monthAdapter = new ArrayAdapter<>(this, 
-                android.R.layout.simple_spinner_item, months);
+        ArrayAdapter<String> monthAdapter = new ArrayAdapter<String>(this, 
+                android.R.layout.simple_spinner_item, months) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                if (view instanceof TextView) {
+                    ((TextView) view).setTextColor(getResources().getColor(R.color.textPrimary));
+                }
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                if (view instanceof TextView) {
+                    ((TextView) view).setTextColor(getResources().getColor(R.color.textPrimary));
+                }
+                return view;
+            }
+        };
         monthAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         monthSpinner.setAdapter(monthAdapter);
 
@@ -106,8 +125,26 @@ public class BudgetActivity extends BaseActivity {
         Calendar calendar = Calendar.getInstance();
         int currentYear = calendar.get(Calendar.YEAR);
         String[] years = {String.valueOf(currentYear), String.valueOf(currentYear + 1), String.valueOf(currentYear + 2)};
-        ArrayAdapter<String> yearAdapter = new ArrayAdapter<>(this, 
-                android.R.layout.simple_spinner_item, years);
+        ArrayAdapter<String> yearAdapter = new ArrayAdapter<String>(this, 
+                android.R.layout.simple_spinner_item, years) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                if (view instanceof TextView) {
+                    ((TextView) view).setTextColor(getResources().getColor(R.color.textPrimary));
+                }
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                if (view instanceof TextView) {
+                    ((TextView) view).setTextColor(getResources().getColor(R.color.textPrimary));
+                }
+                return view;
+            }
+        };
         yearAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         yearSpinner.setAdapter(yearAdapter);
 

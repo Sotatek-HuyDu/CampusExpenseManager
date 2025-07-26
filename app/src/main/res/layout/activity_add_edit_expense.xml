@@ -41,14 +41,19 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:hint="Description">
+                android:hint="Description"
+                app:hintTextColor="@color/primary"
+                app:boxStrokeColor="@color/primary"
+                app:boxStrokeWidth="1dp"
+                app:boxStrokeWidthFocused="2dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/description_edit_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
-                    android:maxLines="3" />
+                    android:maxLines="3"
+                    android:textColor="@color/textPrimary" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -59,13 +64,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:hint="Amount">
+                android:hint="Amount"
+                app:hintTextColor="@color/primary"
+                app:boxStrokeColor="@color/primary"
+                app:boxStrokeWidth="1dp"
+                app:boxStrokeWidthFocused="2dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/amount_edit_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="numberDecimal" />
+                    android:inputType="numberDecimal"
+                    android:textColor="@color/textPrimary" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -76,13 +86,19 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:hint="Category">
+                android:hint="Category"
+                app:hintTextColor="@color/primary"
+                app:boxStrokeColor="@color/primary"
+                app:boxStrokeWidth="1dp"
+                app:boxStrokeWidthFocused="2dp"
+                app:endIconMode="dropdown_menu">
 
                 <AutoCompleteTextView
                     android:id="@+id/category_spinner"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none" />
+                    android:inputType="none"
+                    android:textColor="@color/textPrimary" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -93,7 +109,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
-                android:hint="Date">
+                android:hint="Date"
+                app:hintTextColor="@color/primary"
+                app:boxStrokeColor="@color/primary"
+                app:boxStrokeWidth="1dp"
+                app:boxStrokeWidthFocused="2dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/date_edit_text"
@@ -101,7 +121,8 @@
                     android:layout_height="wrap_content"
                     android:inputType="none"
                     android:focusable="false"
-                    android:clickable="true" />
+                    android:clickable="true"
+                    android:textColor="@color/textPrimary" />
 
             </com.google.android.material.textfield.TextInputLayout>
 

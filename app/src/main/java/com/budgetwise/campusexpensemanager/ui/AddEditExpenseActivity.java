@@ -107,6 +107,9 @@ public class AddEditExpenseActivity extends AppCompatActivity {
         CategorySpinnerAdapter adapter = new CategorySpinnerAdapter(this, java.util.Arrays.asList(categories));
         categorySpinner.setAdapter(adapter);
         categorySpinner.setText(categories[0], false); // Set default to first category
+        
+        // Set dropdown background to white
+        categorySpinner.setDropDownBackgroundDrawable(getResources().getDrawable(android.R.color.white));
     }
 
     private void setupDatePicker() {

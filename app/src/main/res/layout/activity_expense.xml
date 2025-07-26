@@ -44,7 +44,7 @@
             android:text="No expenses yet\nTap + to add your first expense"
             android:textAlignment="center"
             android:textSize="16sp"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="@color/hintText"
             android:visibility="gone"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"

@@ -5,6 +5,9 @@ import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Toast;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -95,23 +98,65 @@ public class AddEditBudgetActivity extends AppCompatActivity {
         CategorySpinnerAdapter categoryAdapter = new CategorySpinnerAdapter(this, java.util.Arrays.asList(categories));
         categorySpinner.setAdapter(categoryAdapter);
         categorySpinner.setText(categories[0], false);
+        // Set dropdown background to white
+        categorySpinner.setDropDownBackgroundDrawable(getResources().getDrawable(android.R.color.white));
 
         // Setup month spinner
         String[] months = {
             "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"
         };
-        ArrayAdapter<String> monthAdapter = new ArrayAdapter<>(this, 
-                android.R.layout.simple_dropdown_item_1line, months);
+        ArrayAdapter<String> monthAdapter = new ArrayAdapter<String>(this, 
+                android.R.layout.simple_dropdown_item_1line, months) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                if (view instanceof TextView) {
+                    ((TextView) view).setTextColor(getResources().getColor(R.color.textPrimary));
+                }
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                if (view instanceof TextView) {
+                    ((TextView) view).setTextColor(getResources().getColor(R.color.textPrimary));
+                }
+                return view;
+            }
+        };
         monthSpinner.setAdapter(monthAdapter);
+        // Set dropdown background to white
+        monthSpinner.setDropDownBackgroundDrawable(getResources().getDrawable(android.R.color.white));
 
         // Setup year spinner
         Calendar calendar = Calendar.getInstance();
         int currentYear = calendar.get(Calendar.YEAR);
         String[] years = {String.valueOf(currentYear), String.valueOf(currentYear + 1), String.valueOf(currentYear + 2)};
-        ArrayAdapter<String> yearAdapter = new ArrayAdapter<>(this, 
-                android.R.layout.simple_dropdown_item_1line, years);
+        ArrayAdapter<String> yearAdapter = new ArrayAdapter<String>(this, 
+                android.R.layout.simple_dropdown_item_1line, years) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                if (view instanceof TextView) {
+                    ((TextView) view).setTextColor(getResources().getColor(R.color.textPrimary));
+                }
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                if (view instanceof TextView) {
+                    ((TextView) view).setTextColor(getResources().getColor(R.color.textPrimary));
+                }
+                return view;
+            }
+        };
         yearSpinner.setAdapter(yearAdapter);
+        // Set dropdown background to white
+        yearSpinner.setDropDownBackgroundDrawable(getResources().getDrawable(android.R.color.white));
     }
 
     private void setupButtons() {

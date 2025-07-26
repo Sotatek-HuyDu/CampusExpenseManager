@@ -51,6 +51,9 @@ public class CategorySpinnerAdapter extends ArrayAdapter<String> {
         String category = categories.get(position);
         categoryText.setText(category);
         
+        // Ensure text color is visible
+        categoryText.setTextColor(context.getResources().getColor(R.color.textPrimary));
+        
         // Set the color indicator
         int categoryColor = CategoryColorUtil.getCategoryColor(context, category);
         colorIndicator.setBackgroundColor(categoryColor);
@@ -58,6 +61,7 @@ public class CategorySpinnerAdapter extends ArrayAdapter<String> {
         // Set the category icon
         int categoryIconRes = CategoryIconUtil.getCategoryIcon(context, category);
         categoryIcon.setImageResource(categoryIconRes);
+        categoryIcon.setColorFilter(context.getResources().getColor(R.color.textPrimary));
         
         return convertView;
     }
