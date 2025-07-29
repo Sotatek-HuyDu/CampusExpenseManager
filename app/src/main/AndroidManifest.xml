@@ -51,7 +51,18 @@
         <activity
             android:name=".ui.AddEditRecurringExpenseActivity"
             android:theme="@style/Theme.CampusExpenseManager" />
-
+        <activity
+            android:name=".ui.OverviewActivity"
+            android:theme="@style/Theme.CampusExpenseManager" />
+        <activity
+            android:name=".ui.TrendsActivity"
+            android:theme="@style/Theme.CampusExpenseManager" />
+        <activity
+            android:name=".ui.DailyTrendsActivity"
+            android:theme="@style/Theme.CampusExpenseManager" />
+        <activity
+            android:name=".ui.CategoryBreakdownActivity"
+            android:theme="@style/Theme.CampusExpenseManager" />
         <service
             android:name=".notifications.RecurringExpenseService"
             android:exported="false" />
