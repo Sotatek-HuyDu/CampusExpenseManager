@@ -51,4 +51,7 @@ dependencies {
     // Room components (keep for migration period)
     implementation(libs.room.runtime)
     annotationProcessor(libs.room.compiler)
+    
+    // MPAndroidChart for line charts
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 }

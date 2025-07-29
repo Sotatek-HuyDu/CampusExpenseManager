@@ -34,9 +34,9 @@ public abstract class BaseActivity extends AppCompatActivity {
             bottomNavigationView.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
                 
-                if (id == R.id.nav_home) {
-                    if (!(this instanceof MainActivity)) {
-                        Intent intent = new Intent(this, MainActivity.class);
+                if (id == R.id.nav_overview) {
+                    if (!(this instanceof OverviewActivity)) {
+                        Intent intent = new Intent(this, OverviewActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                         startActivity(intent);
                         finish();
@@ -56,17 +56,21 @@ public abstract class BaseActivity extends AppCompatActivity {
                         finish();
                     }
                     return true;
-                } else if (id == R.id.nav_budget) {
+                                                } else if (id == R.id.nav_budget) {
                     if (!(this instanceof BudgetActivity)) {
                         Intent intent = new Intent(this, BudgetActivity.class);
                         startActivity(intent);
                         finish();
                     }
                     return true;
-                } else if (id == R.id.nav_profile) {
-                    // TODO: handle profile navigation
-                    Toast.makeText(this, "Profile coming soon", Toast.LENGTH_SHORT).show();
+                } else if (id == R.id.nav_overview) {
+                    if (!(this instanceof OverviewActivity)) {
+                        Intent intent = new Intent(this, OverviewActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
                     return true;
+
                 }
                 return false;
             });
@@ -77,14 +81,16 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     private void setSelectedNavigationItem() {
-        if (this instanceof MainActivity) {
-            bottomNavigationView.setSelectedItemId(R.id.nav_home);
+        if (this instanceof OverviewActivity) {
+            bottomNavigationView.setSelectedItemId(R.id.nav_overview);
         } else if (this instanceof ExpenseActivity) {
             bottomNavigationView.setSelectedItemId(R.id.nav_expenses);
         } else if (this instanceof RecurringExpenseActivity) {
             bottomNavigationView.setSelectedItemId(R.id.nav_recurring);
-        } else if (this instanceof BudgetActivity) {
+                                } else if (this instanceof BudgetActivity) {
             bottomNavigationView.setSelectedItemId(R.id.nav_budget);
+        } else if (this instanceof OverviewActivity) {
+            bottomNavigationView.setSelectedItemId(R.id.nav_overview);
         }
         // Add more cases as you add more activities
     }

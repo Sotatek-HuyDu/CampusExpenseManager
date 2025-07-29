@@ -4,6 +4,7 @@ import com.budgetwise.campusexpensemanager.firebase.repository.AccountRepository
 import com.budgetwise.campusexpensemanager.firebase.repository.BudgetRepository;
 import com.budgetwise.campusexpensemanager.firebase.ExpenseRepository;
 import com.budgetwise.campusexpensemanager.firebase.repository.RecurringExpenseRepository;
+import com.budgetwise.campusexpensemanager.firebase.repository.ExpenseAnalyticsRepository;
 
 public class FirebaseManager {
     private static FirebaseManager instance;
@@ -11,6 +12,7 @@ public class FirebaseManager {
     private final ExpenseRepository expenseRepository;
     private final BudgetRepository budgetRepository;
     private final RecurringExpenseRepository recurringExpenseRepository;
+    private final ExpenseAnalyticsRepository analyticsRepository;
     
     private FirebaseManager() {
         // Initialize Firebase repositories
@@ -18,6 +20,7 @@ public class FirebaseManager {
         expenseRepository = new ExpenseRepository();
         budgetRepository = new BudgetRepository();
         recurringExpenseRepository = new RecurringExpenseRepository();
+        analyticsRepository = new ExpenseAnalyticsRepository();
     }
     
 
@@ -43,5 +46,9 @@ public class FirebaseManager {
     
     public RecurringExpenseRepository getRecurringExpenseRepository() {
         return recurringExpenseRepository;
+    }
+    
+    public ExpenseAnalyticsRepository getAnalyticsRepository() {
+        return analyticsRepository;
     }
 } 
