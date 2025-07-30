@@ -1,7 +1,7 @@
 # Firebase Setup for Campus Expense Manager
 
 ## Overview
-This project has been configured to use Firebase Firestore as the primary database, replacing the local Room database with a cloud-based solution.
+This project uses Firebase Firestore as the primary database for cloud-based data storage and synchronization.
 
 ## What's Included
 
@@ -124,8 +124,7 @@ service cloud.firestore {
 ## Next Steps
 
 1. Set up your Firebase project and add `google-services.json`
-2. Replace Room database calls with Firebase operations
-3. Test the implementation
-4. Remove Room dependencies once Firebase is fully integrated
+2. Test the implementation
+3. Verify Firebase integration is working correctly
 
 For detailed setup instructions, see `FIREBASE_SETUP_GUIDE.md`. 

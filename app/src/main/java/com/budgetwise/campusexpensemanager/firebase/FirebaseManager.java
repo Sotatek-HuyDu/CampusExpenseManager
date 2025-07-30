@@ -1,7 +1,7 @@
 package com.budgetwise.campusexpensemanager.firebase;
 
 import com.budgetwise.campusexpensemanager.firebase.repository.AccountRepository;
-import com.budgetwise.campusexpensemanager.firebase.repository.BudgetRepository;
+import com.budgetwise.campusexpensemanager.firebase.BudgetRepository;
 import com.budgetwise.campusexpensemanager.firebase.ExpenseRepository;
 import com.budgetwise.campusexpensemanager.firebase.repository.RecurringExpenseRepository;
 import com.budgetwise.campusexpensemanager.firebase.repository.ExpenseAnalyticsRepository;

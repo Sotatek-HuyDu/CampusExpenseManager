@@ -89,18 +89,6 @@
                 android:textColor="@color/hintText"
                 android:gravity="end" />
 
-            <!-- Edit Button -->
-            <ImageButton
-                android:id="@+id/edit_budget_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="8dp"
-                android:src="@drawable/edit"
-                android:contentDescription="Edit Budget"
-                app:tint="@color/hintText" />
-
         </LinearLayout>
 
     </LinearLayout>

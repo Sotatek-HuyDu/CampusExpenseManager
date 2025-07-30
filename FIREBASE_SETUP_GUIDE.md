@@ -147,10 +147,10 @@ service cloud.firestore {
 
 ## Next Steps
 
-1. **Integrate Firebase**: Replace Room database calls with Firebase operations in your activities
+1. **Integrate Firebase**: Use Firebase operations in your activities
 2. **Update UI**: Modify activities to handle asynchronous Firebase operations
 3. **Add Real-time Features**: Implement real-time updates using Firestore listeners
-4. **Remove Room Dependencies**: Once Firebase is fully integrated, remove Room dependencies
+4. **Test Firebase Integration**: Verify all Firebase operations work correctly
 
 ## Troubleshooting
 

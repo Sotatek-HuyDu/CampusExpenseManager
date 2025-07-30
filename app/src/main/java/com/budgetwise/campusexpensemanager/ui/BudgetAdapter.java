@@ -67,7 +67,6 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
         private TextView spentAmountTextView;
         private TextView remainingAmountTextView;
         private LinearProgressIndicator progressIndicator;
-        private ImageButton editButton;
         private android.widget.ImageView categoryIconView;
 
         public BudgetViewHolder(@NonNull View itemView) {
@@ -77,11 +76,10 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
             spentAmountTextView = itemView.findViewById(R.id.spent_amount);
             remainingAmountTextView = itemView.findViewById(R.id.remaining_amount);
             progressIndicator = itemView.findViewById(R.id.budget_progress);
-            editButton = itemView.findViewById(R.id.edit_budget_button);
             categoryIconView = itemView.findViewById(R.id.budget_category_icon);
 
-            // Set click listener for editing
-            editButton.setOnClickListener(v -> {
+            // Set click listener for the entire card
+            itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
                     FirebaseBudget budget = budgets.get(position);
@@ -141,47 +139,31 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
                 
                 @Override
                 public void onCancelled(com.google.firebase.database.DatabaseError databaseError) {
-                    android.util.Log.e("BudgetAdapter", "Error loading expenses: " + databaseError.getMessage());
+                    // Error loading expenses
                 }
             });
         }
         
         private void addRecurringExpensesToSpentAmount(FirebaseBudget budget, final double[] spentAmount, int categoryColor) {
-            android.util.Log.d("BudgetAdapter", "Loading recurring expenses for account: " + budget.getAccountId() + 
-                ", category: " + budget.getCategory() + ", month: " + budget.getMonth() + ", year: " + budget.getYear());
-            
             recurringExpenseRepository.getRecurringExpensesByAccount(budget.getAccountId())
                 .addValueEventListener(new com.google.firebase.database.ValueEventListener() {
                     @Override
                     public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
                         final double[] recurringAmount = {0.0};
                         
-                        android.util.Log.d("BudgetAdapter", "Found " + dataSnapshot.getChildrenCount() + " recurring expenses");
-                        
                         for (com.google.firebase.database.DataSnapshot snapshot : dataSnapshot.getChildren()) {
                             FirebaseRecurringExpense recurringExpense = snapshot.getValue(FirebaseRecurringExpense.class);
-                            android.util.Log.d("BudgetAdapter", "Checking recurring expense: " + 
-                                (recurringExpense != null ? recurringExpense.getDescription() : "null") + 
-                                ", category: " + (recurringExpense != null ? recurringExpense.getCategory() : "null"));
                             
                             if (recurringExpense != null && 
                                 recurringExpense.getCategory().equals(budget.getCategory())) {
                                 // Check if this recurring expense should create an expense in the target month
                                 if (shouldCreateExpenseInMonth(recurringExpense, budget.getMonth(), budget.getYear())) {
                                     recurringAmount[0] += recurringExpense.getAmount();
-                                    android.util.Log.d("BudgetAdapter", "Added recurring expense: " + 
-                                        recurringExpense.getDescription() + " ($" + recurringExpense.getAmount() + 
-                                        ") to budget for " + budget.getCategory());
-                                } else {
-                                    android.util.Log.d("BudgetAdapter", "Skipped recurring expense: " + 
-                                        recurringExpense.getDescription() + " for budget " + budget.getCategory() + 
-                                        " (month: " + budget.getMonth() + ", year: " + budget.getYear() + ")");
                                 }
                             }
                         }
                         
                         // Add recurring amount to total spent
-                        android.util.Log.d("BudgetAdapter", "Final recurring amount: $" + recurringAmount[0]);
                         spentAmount[0] += recurringAmount[0];
                         
                         final double remainingAmount = budget.getLimit() - spentAmount[0];
@@ -207,22 +189,21 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
                             } else {
                                 progressIndicator.setIndicatorColor(categoryColor);
                             }
+                            
+                            // Apply visual indicators to the card based on progress
+                            applyCardVisualIndicators(progress);
                         });
                     }
                     
-                    @Override
-                    public void onCancelled(com.google.firebase.database.DatabaseError databaseError) {
-                        android.util.Log.e("BudgetAdapter", "Error loading recurring expenses: " + databaseError.getMessage());
-                    }
+                                    @Override
+                public void onCancelled(com.google.firebase.database.DatabaseError databaseError) {
+                    // Error loading recurring expenses
+                }
                 });
         }
         
         private boolean shouldCreateExpenseInMonth(FirebaseRecurringExpense recurringExpense, int month, int year) {
-            android.util.Log.d("BudgetAdapter", "Checking if should create expense for: " + recurringExpense.getDescription() + 
-                " in month: " + month + ", year: " + year);
-            
             if (recurringExpense.getStartDate() == null || recurringExpense.getEndDate() == null) {
-                android.util.Log.d("BudgetAdapter", "Skipping - null dates");
                 return false;
             }
             
@@ -231,10 +212,6 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
             
             startDate.setTime(recurringExpense.getStartDate());
             endDate.setTime(recurringExpense.getEndDate());
-            
-            android.util.Log.d("BudgetAdapter", "Start date: " + startDate.getTime() + 
-                ", End date: " + endDate.getTime() + 
-                ", Target month: " + month + "/" + year);
             
             // Simple logic: if the recurring expense is active in the target month, include it
             // Check if the start date is before or in the target month, and end date is after or in the target month
@@ -246,7 +223,6 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
             
             boolean shouldInclude = !startDate.after(targetMonthEnd) && !endDate.before(targetMonthStart);
             
-            android.util.Log.d("BudgetAdapter", "Date range check - shouldInclude: " + shouldInclude);
             return shouldInclude;
         }
         
@@ -258,6 +234,30 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
             
             return expenseCal.get(java.util.Calendar.MONTH) + 1 == month && 
                    expenseCal.get(java.util.Calendar.YEAR) == year;
+        }
+
+        private void applyCardVisualIndicators(int progress) {
+            // Get the MaterialCardView (the main card container)
+            com.google.android.material.card.MaterialCardView cardView = (com.google.android.material.card.MaterialCardView) itemView;
+            
+            if (progress > 100) {
+                // Over 100% - Red border and shadow only
+                cardView.setStrokeColor(context.getResources().getColor(android.R.color.holo_red_dark));
+                cardView.setStrokeWidth(5);
+                cardView.setCardElevation(8);
+                cardView.setCardBackgroundColor(context.getResources().getColor(R.color.backgroundWhite));
+            } else if (progress >= 80) {
+                // 80-100% - Yellow border and shadow
+                cardView.setStrokeColor(context.getResources().getColor(android.R.color.holo_orange_light));
+                cardView.setStrokeWidth(4);
+                cardView.setCardElevation(6);
+                cardView.setCardBackgroundColor(context.getResources().getColor(R.color.backgroundWhite));
+            } else {
+                // 0-80% - No special styling
+                cardView.setStrokeWidth(0);
+                cardView.setCardElevation(2);
+                cardView.setCardBackgroundColor(context.getResources().getColor(R.color.backgroundWhite));
+            }
         }
     }
 } 

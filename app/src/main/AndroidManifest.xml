@@ -5,6 +5,7 @@
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".CampusExpenseManagerApp"
@@ -62,6 +63,9 @@
             android:theme="@style/Theme.CampusExpenseManager" />
         <activity
             android:name=".ui.CategoryBreakdownActivity"
+            android:theme="@style/Theme.CampusExpenseManager" />
+        <activity
+            android:name=".ui.ReportActivity"
             android:theme="@style/Theme.CampusExpenseManager" />
         <service
             android:name=".notifications.RecurringExpenseService"
