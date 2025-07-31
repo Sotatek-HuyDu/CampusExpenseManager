@@ -10,9 +10,10 @@ public class FirebaseRecurringExpense {
     private String category;
     private Date startDate;
     private Date endDate;
+    private Object firebaseStartDate;
+    private Object firebaseEndDate;
     private int recurrenceIntervalDays;
     
-    // Required empty constructor for Firebase Realtime Database
     public FirebaseRecurringExpense() {}
     
     public FirebaseRecurringExpense(String accountId, String description, double amount, 
@@ -26,7 +27,6 @@ public class FirebaseRecurringExpense {
         this.recurrenceIntervalDays = recurrenceIntervalDays;
     }
     
-    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -68,7 +68,16 @@ public class FirebaseRecurringExpense {
     }
     
     public Date getStartDate() {
-        return startDate;
+        if (startDate != null) {
+            return startDate;
+        }
+        if (firebaseStartDate instanceof java.util.Map) {
+            java.util.Map<String, Object> dateMap = (java.util.Map<String, Object>) firebaseStartDate;
+            if (dateMap.containsKey("time")) {
+                return new Date((Long) dateMap.get("time"));
+            }
+        }
+        return null;
     }
     
     public void setStartDate(Date startDate) {
@@ -76,11 +85,36 @@ public class FirebaseRecurringExpense {
     }
     
     public Date getEndDate() {
-        return endDate;
+        if (endDate != null) {
+            return endDate;
+        }
+        if (firebaseEndDate instanceof java.util.Map) {
+            java.util.Map<String, Object> dateMap = (java.util.Map<String, Object>) firebaseEndDate;
+            if (dateMap.containsKey("time")) {
+                return new Date((Long) dateMap.get("time"));
+            }
+        }
+        return null;
     }
     
     public void setEndDate(Date endDate) {
         this.endDate = endDate;
+    }
+    
+    public Object getFirebaseStartDate() {
+        return firebaseStartDate;
+    }
+    
+    public void setFirebaseStartDate(Object firebaseStartDate) {
+        this.firebaseStartDate = firebaseStartDate;
+    }
+    
+    public Object getFirebaseEndDate() {
+        return firebaseEndDate;
+    }
+    
+    public void setFirebaseEndDate(Object firebaseEndDate) {
+        this.firebaseEndDate = firebaseEndDate;
     }
     
     public int getRecurrenceIntervalDays() {

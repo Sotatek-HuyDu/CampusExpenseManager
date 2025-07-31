@@ -8,6 +8,7 @@ public class SessionManager {
     private static final String KEY_IS_LOGGED_IN = "is_logged_in";
     private static final String KEY_USERNAME = "username";
     private static final String KEY_ACCOUNT_ID = "account_id";
+    private static final String KEY_USER_EMAIL = "user_email";
     private final SharedPreferences prefs;
     private final SharedPreferences.Editor editor;
 
@@ -44,5 +45,14 @@ public class SessionManager {
     
     public String getAccountId() {
         return prefs.getString(KEY_ACCOUNT_ID, null);
+    }
+    
+    public void saveUserEmail(String email) {
+        editor.putString(KEY_USER_EMAIL, email);
+        editor.apply();
+    }
+    
+    public String getUserEmail() {
+        return prefs.getString(KEY_USER_EMAIL, null);
     }
 }

@@ -13,6 +13,7 @@ import com.budgetwise.campusexpensemanager.R;
 import com.budgetwise.campusexpensemanager.firebase.FirebaseManager;
 import com.budgetwise.campusexpensemanager.firebase.models.FirebaseAccount;
 import com.budgetwise.campusexpensemanager.utils.SessionManager;
+import com.budgetwise.campusexpensemanager.utils.PasswordHasher;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -33,6 +34,9 @@ public class LoginActivity extends AppCompatActivity {
         
         // Initialize Firebase manager
         firebaseManager = FirebaseManager.getInstance();
+        
+        // Request notification permission for first-time users
+        requestNotificationPermission();
         
         // Enable anonymous authentication
         com.google.firebase.auth.FirebaseAuth.getInstance().signInAnonymously()
@@ -78,14 +82,29 @@ public class LoginActivity extends AppCompatActivity {
                             // Check if any account matches both username and password
                             for (com.google.firebase.database.DataSnapshot snapshot : dataSnapshot.getChildren()) {
                                 java.util.Map<String, Object> userData = (java.util.Map<String, Object>) snapshot.getValue();
-                                if (userData != null && userData.get("password").equals(password)) {
+                                String storedPassword = (String) userData.get("password");
+                                if (userData != null && PasswordHasher.verifyPassword(password, storedPassword)) {
                                     // Login successful
                                     String accountId = snapshot.getKey(); // Use Firebase key as account ID
                                     session.login(username, accountId);
+                                    
+                                    // Save email if it exists in the account data
+                                    if (userData.get("email") != null) {
+                                        String email = userData.get("email").toString();
+                                        if (!email.isEmpty()) {
+                                            session.saveUserEmail(email);
+                                        }
+                                    }
 
                                     loginButton.setEnabled(true);
                                     loginButton.setText("Login");
                                     Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
+                                    
+                                    // Schedule daily notifications after successful login
+                                    com.budgetwise.campusexpensemanager.notifications.DailyNotificationService dailyNotificationService = 
+                                        new com.budgetwise.campusexpensemanager.notifications.DailyNotificationService(LoginActivity.this);
+                                    dailyNotificationService.scheduleDailyNotifications();
+                                    
                                     Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                                     intent.putExtra("accountId", accountId);
                                     startActivity(intent);
@@ -118,5 +137,27 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(new Intent(this, RegisterActivity.class));
             finish();
         });
+    }
+    
+    private void requestNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                // Use system default permission request
+                requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 100);
+            }
+        }
+    }
+    
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        
+        if (requestCode == 100) {
+            if (grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Notifications enabled! You'll receive daily budget reminders.", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this, "You can enable notifications later in Settings if you change your mind.", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 }

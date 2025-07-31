@@ -134,9 +134,9 @@
 
                 </androidx.cardview.widget.CardView>
 
-                <!-- Summary Card -->
+                <!-- Overall Spending Summary Card -->
                 <androidx.cardview.widget.CardView
-                    android:id="@+id/summary_card"
+                    android:id="@+id/spending_summary_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
@@ -152,7 +152,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Monthly Summary"
+                            android:text="Overall Spending Summary"
                             android:textSize="18sp"
                             android:textStyle="bold"
                             android:layout_marginBottom="16dp" />
@@ -196,6 +196,89 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
+                                    android:text="Unbudgeted Spending"
+                                    android:textSize="12sp"
+                                    android:textColor="@color/hintText" />
+
+                                <TextView
+                                    android:id="@+id/unbudgeted_spending_text"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="$0.00"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    android:textColor="@color/secondary" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <!-- Budget Performance Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/budget_performance_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Budget Performance"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="16dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="8dp">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Budgeted Spending"
+                                    android:textSize="12sp"
+                                    android:textColor="@color/hintText" />
+
+                                <TextView
+                                    android:id="@+id/budgeted_spending_text"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="$0.00"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    android:textColor="@color/secondary" />
+
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
                                     android:text="Total Budget"
                                     android:textSize="12sp"
                                     android:textColor="@color/hintText" />
@@ -205,7 +288,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="$0.00"
-                                    android:textSize="20sp"
+                                    android:textSize="16sp"
                                     android:textStyle="bold"
                                     android:textColor="@color/secondary" />
 
@@ -228,7 +311,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Remaining"
+                                    android:text="Remaining Budget"
                                     android:textSize="12sp"
                                     android:textColor="@color/hintText" />
 
@@ -251,7 +334,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Utilization"
+                                    android:text="Budget Utilization"
                                     android:textSize="12sp"
                                     android:textColor="@color/hintText" />
 
@@ -354,13 +437,28 @@
                         android:orientation="vertical"
                         android:padding="16dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Expense Trends"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="8dp" />
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="8dp">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Expense Trends"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_eye_open"
+                                android:contentDescription="Clickable indicator" />
+
+                        </LinearLayout>
 
                         <TextView
                             android:layout_width="wrap_content"

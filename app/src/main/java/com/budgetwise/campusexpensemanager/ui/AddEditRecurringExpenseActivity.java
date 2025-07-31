@@ -145,6 +145,10 @@ public class AddEditRecurringExpenseActivity extends AppCompatActivity {
     }
 
     private void saveRecurringExpense() {
+        // Disable save button to prevent multiple submissions
+        saveButton.setEnabled(false);
+        saveButton.setText("Saving...");
+        
         String description = descriptionEditText.getText().toString().trim();
         String amountStr = amountEditText.getText().toString().trim();
         String category = categorySpinner.getSelectedItem().toString();
@@ -153,11 +157,15 @@ public class AddEditRecurringExpenseActivity extends AppCompatActivity {
         // Validation
         if (description.isEmpty()) {
             descriptionEditText.setError("Description is required");
+            saveButton.setEnabled(true);
+            saveButton.setText("Save");
             return;
         }
 
         if (amountStr.isEmpty()) {
             amountEditText.setError("Amount is required");
+            saveButton.setEnabled(true);
+            saveButton.setText("Save");
             return;
         }
 
@@ -166,10 +174,14 @@ public class AddEditRecurringExpenseActivity extends AppCompatActivity {
             amount = Double.parseDouble(amountStr);
             if (amount <= 0) {
                 amountEditText.setError("Amount must be greater than 0");
+                saveButton.setEnabled(true);
+                saveButton.setText("Save");
                 return;
             }
         } catch (NumberFormatException e) {
             amountEditText.setError("Invalid amount");
+            saveButton.setEnabled(true);
+            saveButton.setText("Save");
             return;
         }
 
@@ -195,45 +207,62 @@ public class AddEditRecurringExpenseActivity extends AppCompatActivity {
         }
     }
 
-
-
     private void addRecurringExpense(FirebaseRecurringExpense recurringExpense) {
         recurringExpenseRepository.insert(recurringExpense)
             .addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    Toast.makeText(this, "Recurring expense added successfully", Toast.LENGTH_SHORT).show();
-                    finish();
-                } else {
-                    Toast.makeText(this, "Failed to add recurring expense", Toast.LENGTH_SHORT).show();
-                }
+                runOnUiThread(() -> {
+                    saveButton.setEnabled(true);
+                    saveButton.setText("Save");
+                    
+                    if (task.isSuccessful()) {
+                        Toast.makeText(this, "Recurring expense added successfully", Toast.LENGTH_SHORT).show();
+                        finish();
+                    } else {
+                        Toast.makeText(this, "Failed to add recurring expense: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
             });
     }
 
     private void updateRecurringExpense(FirebaseRecurringExpense recurringExpense) {
         recurringExpenseRepository.update(recurringExpense)
             .addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    Toast.makeText(this, "Recurring expense updated successfully", Toast.LENGTH_SHORT).show();
-                    finish();
-                } else {
-                    Toast.makeText(this, "Failed to update recurring expense", Toast.LENGTH_SHORT).show();
-                }
+                runOnUiThread(() -> {
+                    saveButton.setEnabled(true);
+                    saveButton.setText("Save");
+                    
+                    if (task.isSuccessful()) {
+                        Toast.makeText(this, "Recurring expense updated successfully", Toast.LENGTH_SHORT).show();
+                        finish();
+                    } else {
+                        Toast.makeText(this, "Failed to update recurring expense: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
             });
     }
 
     private void deleteRecurringExpense() {
         if (recurringExpenseId != null) {
+            // Disable delete button
+            deleteButton.setEnabled(false);
+            deleteButton.setText("Deleting...");
+            
             FirebaseRecurringExpense recurringExpense = new FirebaseRecurringExpense();
             recurringExpense.setId(recurringExpenseId);
             
             recurringExpenseRepository.delete(recurringExpense)
                 .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Toast.makeText(this, "Recurring expense deleted successfully", Toast.LENGTH_SHORT).show();
-                        finish();
-                    } else {
-                        Toast.makeText(this, "Failed to delete recurring expense", Toast.LENGTH_SHORT).show();
-                    }
+                    runOnUiThread(() -> {
+                        deleteButton.setEnabled(true);
+                        deleteButton.setText("Delete");
+                        
+                        if (task.isSuccessful()) {
+                            Toast.makeText(this, "Recurring expense deleted successfully", Toast.LENGTH_SHORT).show();
+                            finish();
+                        } else {
+                            Toast.makeText(this, "Failed to delete recurring expense: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 });
         }
     }
@@ -241,20 +270,39 @@ public class AddEditRecurringExpenseActivity extends AppCompatActivity {
     private void loadRecurringExpense() {
         if (recurringExpenseId == null) return;
         
+        // Show loading state
+        saveButton.setEnabled(false);
+        saveButton.setText("Loading...");
+        
         recurringExpenseRepository.getRecurringExpenseById(recurringExpenseId)
-            .addValueEventListener(new com.google.firebase.database.ValueEventListener() {
+            .addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
                 @Override
                 public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
-                    FirebaseRecurringExpense recurringExpense = dataSnapshot.getValue(FirebaseRecurringExpense.class);
-                    if (recurringExpense != null) {
-                        populateForm(recurringExpense);
-                    }
+                    runOnUiThread(() -> {
+                        saveButton.setEnabled(true);
+                        saveButton.setText("Save");
+                        
+                        FirebaseRecurringExpense recurringExpense = dataSnapshot.getValue(FirebaseRecurringExpense.class);
+                        if (recurringExpense != null) {
+                            populateForm(recurringExpense);
+                        } else {
+                            Toast.makeText(AddEditRecurringExpenseActivity.this, 
+                                "Recurring expense not found", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                    });
                 }
                 
                 @Override
                 public void onCancelled(com.google.firebase.database.DatabaseError databaseError) {
-                    Toast.makeText(AddEditRecurringExpenseActivity.this, 
-                        "Failed to load recurring expense", Toast.LENGTH_SHORT).show();
+                    runOnUiThread(() -> {
+                        saveButton.setEnabled(true);
+                        saveButton.setText("Save");
+                        
+                        Toast.makeText(AddEditRecurringExpenseActivity.this, 
+                            "Failed to load recurring expense: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                        finish();
+                    });
                 }
             });
     }
@@ -266,13 +314,17 @@ public class AddEditRecurringExpenseActivity extends AppCompatActivity {
         // Populate amount
         amountEditText.setText(String.valueOf(recurringExpense.getAmount()));
         
-        // Populate category
+        // Populate category - optimize spinner selection
         String category = recurringExpense.getCategory();
+        int categoryPosition = -1;
         for (int i = 0; i < categorySpinner.getCount(); i++) {
             if (categorySpinner.getItemAtPosition(i).toString().equals(category)) {
-                categorySpinner.setSelection(i);
+                categoryPosition = i;
                 break;
             }
+        }
+        if (categoryPosition >= 0) {
+            categorySpinner.setSelection(categoryPosition);
         }
         
         // Populate dates
@@ -286,14 +338,18 @@ public class AddEditRecurringExpenseActivity extends AppCompatActivity {
             endDateTextView.setText(dateFormat.format(endDate.getTime()));
         }
         
-        // Populate interval
+        // Populate interval - optimize spinner selection
         int intervalDays = recurringExpense.getRecurrenceIntervalDays();
         String intervalDescription = RecurringExpenseUtil.getIntervalDescription(intervalDays);
+        int intervalPosition = -1;
         for (int i = 0; i < intervalSpinner.getCount(); i++) {
             if (intervalSpinner.getItemAtPosition(i).toString().equals(intervalDescription)) {
-                intervalSpinner.setSelection(i);
+                intervalPosition = i;
                 break;
             }
+        }
+        if (intervalPosition >= 0) {
+            intervalSpinner.setSelection(intervalPosition);
         }
     }
 

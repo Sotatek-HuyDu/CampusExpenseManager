@@ -285,15 +285,15 @@ public class BudgetActivity extends BaseActivity {
     }
 
     private void loadBudgets() {
-        String currentUser = sessionManager.getUsername();
-        if (currentUser == null) {
+        String accountId = sessionManager.getAccountId();
+        if (accountId == null) {
             showEmptyState();
             return;
         }
 
-        Log.d("BudgetActivity", "Loading budgets for user: " + currentUser + ", month: " + selectedMonth + ", year: " + selectedYear);
+        Log.d("BudgetActivity", "Loading budgets for account: " + accountId + ", month: " + selectedMonth + ", year: " + selectedYear);
 
-        Query query = budgetRepository.getBudgetByAccountAndMonth(currentUser, selectedMonth, selectedYear);
+        Query query = budgetRepository.getBudgetByAccountAndMonth(accountId, selectedMonth, selectedYear);
         query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {

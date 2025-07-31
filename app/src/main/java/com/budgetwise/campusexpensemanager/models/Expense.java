@@ -8,6 +8,7 @@ public class Expense {
     private double amount;
     private String category;
     private Date date;
+    private String accountId;
     private String userId;
     private long timestamp;
 
@@ -15,12 +16,12 @@ public class Expense {
     public Expense() {
     }
 
-    public Expense(String description, double amount, String category, Date date, String userId) {
+    public Expense(String description, double amount, String category, Date date, String accountId) {
         this.description = description;
         this.amount = amount;
         this.category = category;
         this.date = date;
-        this.userId = userId;
+        this.accountId = accountId;
         this.timestamp = System.currentTimeMillis();
     }
 
@@ -63,6 +64,14 @@ public class Expense {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    public String getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(String accountId) {
+        this.accountId = accountId;
     }
 
     public String getUserId() {

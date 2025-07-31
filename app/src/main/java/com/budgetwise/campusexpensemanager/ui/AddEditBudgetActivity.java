@@ -254,17 +254,17 @@ public class AddEditBudgetActivity extends AppCompatActivity {
         int month = getMonthNumber(monthStr);
         int year = Integer.parseInt(yearStr);
 
-        String currentUser = sessionManager.getUsername();
-        android.util.Log.d("AddEditBudget", "Current user: " + currentUser);
+        String accountId = sessionManager.getAccountId();
+        android.util.Log.d("AddEditBudget", "Account ID: " + accountId);
         
-        if (currentUser == null) {
+        if (accountId == null) {
             android.util.Log.d("AddEditBudget", "User not logged in");
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
             return;
         }
 
         android.util.Log.d("AddEditBudget", "Creating budget - Category: " + category + ", Amount: " + amount + ", Month: " + month + ", Year: " + year);
-        FirebaseBudget budget = new FirebaseBudget(currentUser, category, amount, month, year);
+        FirebaseBudget budget = new FirebaseBudget(accountId, category, amount, month, year);
         
         if (isEditMode) {
             android.util.Log.d("AddEditBudget", "Updating existing budget");

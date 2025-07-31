@@ -18,6 +18,7 @@ import com.budgetwise.campusexpensemanager.models.ExpenseCategory;
 import com.budgetwise.campusexpensemanager.utils.SessionManager;
 import com.budgetwise.campusexpensemanager.utils.CategoryColorUtil;
 import com.budgetwise.campusexpensemanager.ui.CategorySpinnerAdapter;
+import com.budgetwise.campusexpensemanager.notifications.BudgetNotificationService;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -38,6 +39,7 @@ public class AddEditExpenseActivity extends AppCompatActivity {
 
     private ExpenseRepository expenseRepository;
     private SessionManager sessionManager;
+    private BudgetNotificationService budgetNotificationService;
     private Calendar selectedDate;
     private SimpleDateFormat dateFormat;
     private String expenseId;
@@ -51,6 +53,7 @@ public class AddEditExpenseActivity extends AppCompatActivity {
         // Initialize repositories
         expenseRepository = new ExpenseRepository();
         sessionManager = new SessionManager(this);
+        budgetNotificationService = new BudgetNotificationService(this);
 
         // Initialize views
         initializeViews();
@@ -71,8 +74,8 @@ public class AddEditExpenseActivity extends AppCompatActivity {
         }
         
         // Log user status
-        String currentUser = sessionManager.getUsername();
-        android.util.Log.d("AddEditExpense", "Current user: " + currentUser);
+        String accountId = sessionManager.getAccountId();
+        android.util.Log.d("AddEditExpense", "Account ID: " + accountId);
         android.util.Log.d("AddEditExpense", "Is logged in: " + sessionManager.isLoggedIn());
     }
 
@@ -213,10 +216,9 @@ public class AddEditExpenseActivity extends AppCompatActivity {
         }
 
         // Create or update expense
-        String userId = sessionManager.getUsername();
-        android.util.Log.d("AddEditExpense", "User ID: " + userId);
+        String accountId = sessionManager.getAccountId();
         
-        if (userId == null || userId.isEmpty()) {
+        if (accountId == null || accountId.isEmpty()) {
             Toast.makeText(this, "Error: User not logged in", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -226,7 +228,7 @@ public class AddEditExpenseActivity extends AppCompatActivity {
         expense.setAmount(amount);
         expense.setCategory(category);
         expense.setDate(selectedDate.getTime());
-        expense.setUserId(userId);
+        expense.setAccountId(accountId);
 
         if (isEditMode) {
             expense.setId(expenseId);
@@ -238,16 +240,27 @@ public class AddEditExpenseActivity extends AppCompatActivity {
 
     private void addExpense(Expense expense) {
         saveButton.setEnabled(false);
-        android.util.Log.d("AddEditExpense", "Attempting to add expense: " + expense.getDescription());
         
         expenseRepository.addExpense(expense)
                 .addOnSuccessListener(aVoid -> {
-                    android.util.Log.d("AddEditExpense", "Expense added successfully");
+                    // Check budget threshold and send notification if needed
+                    String accountId = sessionManager.getAccountId();
+                    if (accountId != null) {
+                        int month = selectedDate.get(Calendar.MONTH) + 1;
+                        int year = selectedDate.get(Calendar.YEAR);
+                        budgetNotificationService.checkBudgetThreshold(
+                            accountId, 
+                            expense.getCategory(), 
+                            expense.getAmount(), 
+                            month, 
+                            year
+                        );
+                    }
+                    
                     Toast.makeText(this, "Expense added successfully", Toast.LENGTH_SHORT).show();
                     finish();
                 })
                 .addOnFailureListener(e -> {
-                    android.util.Log.e("AddEditExpense", "Error adding expense: " + e.getMessage(), e);
                     Toast.makeText(this, "Error adding expense: " + e.getMessage(), 
                             Toast.LENGTH_SHORT).show();
                     saveButton.setEnabled(true);
@@ -258,6 +271,20 @@ public class AddEditExpenseActivity extends AppCompatActivity {
         saveButton.setEnabled(false);
         expenseRepository.updateExpense(expense)
                 .addOnSuccessListener(aVoid -> {
+                    // Check budget threshold and send notification if needed
+                    String accountId = sessionManager.getAccountId();
+                    if (accountId != null) {
+                        int month = selectedDate.get(Calendar.MONTH) + 1;
+                        int year = selectedDate.get(Calendar.YEAR);
+                        budgetNotificationService.checkBudgetThreshold(
+                            accountId, 
+                            expense.getCategory(), 
+                            expense.getAmount(), 
+                            month, 
+                            year
+                        );
+                    }
+                    
                     Toast.makeText(this, "Expense updated successfully", Toast.LENGTH_SHORT).show();
                     finish();
                 })

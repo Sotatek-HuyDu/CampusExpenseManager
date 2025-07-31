@@ -164,32 +164,32 @@
         android:id="@+id/button_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:padding="16dp"
         android:background="@android:color/white"
         android:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <Button
-            android:id="@+id/delete_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Delete"
-            android:textColor="@android:color/white"
-            android:backgroundTint="@android:color/holo_red_dark"
-            android:layout_marginEnd="8dp"
-            android:visibility="gone" />
-
-        <Button
+        <!-- Save Button -->
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/save_button"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Save"
-            android:textColor="@android:color/white"
-            android:backgroundTint="@color/primary"
-            android:layout_marginStart="8dp" />
+            android:layout_marginBottom="16dp"
+            android:text="Save Recurring Expense"
+            android:textAllCaps="false"
+            app:cornerRadius="8dp" />
+
+        <!-- Delete Button (only visible when editing) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/delete_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Delete Recurring Expense"
+            android:textAllCaps="false"
+            android:visibility="gone"
+            app:cornerRadius="8dp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
     </LinearLayout>
 

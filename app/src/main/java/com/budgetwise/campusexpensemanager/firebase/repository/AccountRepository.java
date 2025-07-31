@@ -34,4 +34,38 @@ public class AccountRepository extends FirebaseRepository {
     public Task<Void> update(FirebaseAccount account) {
         return getChildReference(COLLECTION_NAME, account.getId()).setValue(account);
     }
+    
+    public Task<Void> updateEmail(String accountId, String email) {
+        return getChildReference(COLLECTION_NAME, accountId).child("email").setValue(email);
+    }
+    
+    public Query getAccountById(String accountId) {
+        return getQuery(COLLECTION_NAME).orderByKey().equalTo(accountId);
+    }
+    
+    public Query getAccountByEmail(String email) {
+        return getQuery(COLLECTION_NAME).orderByChild("email").equalTo(email);
+    }
+    
+    public Task<Boolean> isEmailUnique(String email, String currentAccountId) {
+        return getAccountByEmail(email).get().continueWith(task -> {
+            if (task.isSuccessful() && task.getResult().exists()) {
+                // Check if the found account is the same as current user
+                for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                    String accountId = snapshot.getKey();
+                    if (!accountId.equals(currentAccountId)) {
+                        // Email exists and belongs to a different account
+                        return false;
+                    }
+                }
+            }
+            return true; // Email is unique or belongs to current user
+        });
+    }
+    
+    public Task<Boolean> isUsernameUnique(String username) {
+        return getAccountByUsername(username).get().continueWith(task -> {
+            return !(task.isSuccessful() && task.getResult().exists());
+        });
+    }
 } 

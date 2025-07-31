@@ -9,8 +9,10 @@ public class FirebaseExpense {
     private double amount;
     private String category;
     private Date date;
+    private Object firebaseDate;
+    private String userId;
+    private long timestamp;
     
-    // Required empty constructor for Firebase Realtime Database
     public FirebaseExpense() {}
     
     public FirebaseExpense(String accountId, String description, double amount, String category) {
@@ -21,7 +23,6 @@ public class FirebaseExpense {
         this.date = new Date();
     }
     
-    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -63,10 +64,43 @@ public class FirebaseExpense {
     }
     
     public Date getDate() {
-        return date;
+        if (date != null) {
+            return date;
+        }
+        if (firebaseDate instanceof java.util.Map) {
+            java.util.Map<String, Object> dateMap = (java.util.Map<String, Object>) firebaseDate;
+            if (dateMap.containsKey("time")) {
+                return new Date((Long) dateMap.get("time"));
+            }
+        }
+        return null;
     }
     
     public void setDate(Date date) {
         this.date = date;
+    }
+    
+    public Object getFirebaseDate() {
+        return firebaseDate;
+    }
+    
+    public void setFirebaseDate(Object firebaseDate) {
+        this.firebaseDate = firebaseDate;
+    }
+    
+    public String getUserId() {
+        return userId;
+    }
+    
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+    
+    public long getTimestamp() {
+        return timestamp;
+    }
+    
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 } 

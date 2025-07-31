@@ -7,8 +7,9 @@ public class FirebaseAccount {
     
     private String username;
     private String password;
+    private String email;
     
-    private Date createdAt;
+    private Object createdAt; // Can be Date or Long
     
     // Required empty constructor for Firebase Realtime Database
     public FirebaseAccount() {}
@@ -16,6 +17,13 @@ public class FirebaseAccount {
     public FirebaseAccount(String username, String password) {
         this.username = username;
         this.password = password;
+        this.createdAt = new Date();
+    }
+    
+    public FirebaseAccount(String username, String password, String email) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
         this.createdAt = new Date();
     }
     
@@ -44,11 +52,28 @@ public class FirebaseAccount {
         this.password = password;
     }
     
+    public String getEmail() {
+        return email;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    
     public Date getCreatedAt() {
-        return createdAt;
+        if (createdAt instanceof Date) {
+            return (Date) createdAt;
+        } else if (createdAt instanceof Long) {
+            return new Date((Long) createdAt);
+        }
+        return null;
     }
     
     public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+    
+    public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
     }
 } 

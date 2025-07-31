@@ -87,8 +87,6 @@ public class RecurringExpenseProcessor {
             return;
         }
 
-
-
         // Check if today is a recurrence date
         if (RecurringExpenseUtil.shouldCreateExpenseToday(recurringExpense)) {
             // Create a unique key for this recurring expense and date
@@ -103,45 +101,23 @@ public class RecurringExpenseProcessor {
                 return;
             }
             
-            // Mark as processed
+            // Mark as processed (but don't create actual expense record)
             processedExpenses.put(expenseKey, currentTime);
             
-            createExpenseFromRecurring(recurringExpense, today.getTime());
+            // Log that recurring expense is due (for debugging)
+            Log.d(TAG, "Recurring expense due: " + recurringExpense.getDescription() + 
+                  " for date: " + today.getTime() + " (not creating expense record)");
         }
     }
 
     /**
      * Create an actual expense entry from a recurring expense
+     * DISABLED: This method is no longer used to prevent duplicate counting
      */
     private void createExpenseFromRecurring(FirebaseRecurringExpense recurringExpense, Date expenseDate) {
-        // Check if this expense already exists for this date
-        checkIfExpenseExists(recurringExpense, expenseDate, exists -> {
-            if (!exists) {
-                // Create the expense entry with a special description to identify it as recurring
-                String recurringDescription = "[RECURRING] " + recurringExpense.getDescription();
-                Expense expense = new Expense(
-                    recurringDescription,
-                    recurringExpense.getAmount(),
-                    recurringExpense.getCategory(),
-                    expenseDate,
-                    recurringExpense.getAccountId()
-                );
-
-                // Add to Firebase
-                expenseRepository.addExpense(expense)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            Log.d(TAG, "Created expense from recurring: " + recurringExpense.getDescription() + 
-                                  " for date: " + expenseDate);
-                        } else {
-                            Log.e(TAG, "Failed to create expense from recurring: " + task.getException());
-                        }
-                    });
-            } else {
-                Log.d(TAG, "Expense already exists for recurring: " + recurringExpense.getDescription() + 
-                      " on date: " + expenseDate);
-            }
-        });
+        // This method is disabled to prevent duplicate counting in budget calculations
+        // Recurring expenses are now calculated directly from the recurring_expenses collection
+        Log.d(TAG, "createExpenseFromRecurring disabled - recurring expenses are calculated directly");
     }
 
     /**

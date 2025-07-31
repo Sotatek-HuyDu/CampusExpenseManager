@@ -46,27 +46,127 @@ public class ExpenseRepository {
         return expensesRef.child(expenseId).removeValue();
     }
 
-    public void getExpensesByUser(String userId, ExpenseCallback callback) {
-        expensesRef.orderByChild("userId").equalTo(userId)
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        List<Expense> expenses = new ArrayList<>();
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            Expense expense = snapshot.getValue(Expense.class);
-                            if (expense != null) {
-                                expense.setId(snapshot.getKey());
-                                expenses.add(expense);
+    public void getExpensesByUser(String accountId, ExpenseCallback callback) {
+        String username = getUsernameFromAccountId(accountId);
+        
+        if (username != null) {
+            expensesRef.orderByChild("userId").equalTo(username)
+                    .addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            List<Expense> expenses = new ArrayList<>();
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                Expense expense = snapshot.getValue(Expense.class);
+                                if (expense != null && !isRecurringExpense(expense)) {
+                                    expense.setId(snapshot.getKey());
+                                    expense.setAccountId(accountId);
+                                    expenses.add(expense);
+                                }
                             }
+                            callback.onSuccess(expenses);
                         }
-                        callback.onSuccess(expenses);
-                    }
 
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        callback.onError(databaseError.toException());
-                    }
-                });
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            callback.onError(databaseError.toException());
+                        }
+                    });
+        } else {
+            expensesRef.orderByChild("accountId").equalTo(accountId)
+                    .addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            List<Expense> expenses = new ArrayList<>();
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                Expense expense = snapshot.getValue(Expense.class);
+                                if (expense != null && !isRecurringExpense(expense)) {
+                                    expense.setId(snapshot.getKey());
+                                    expenses.add(expense);
+                                }
+                            }
+                            callback.onSuccess(expenses);
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            callback.onError(databaseError.toException());
+                        }
+                    });
+        }
+    }
+    
+    private boolean isRecurringExpense(Expense expense) {
+        return expense.getDescription() != null && 
+               expense.getDescription().startsWith("[RECURRING]");
+    }
+    
+    public void getAllExpensesByUser(String accountId, ExpenseCallback callback) {
+        String username = getUsernameFromAccountId(accountId);
+        
+        if (username != null) {
+            expensesRef.orderByChild("userId").equalTo(username)
+                    .addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            List<Expense> expenses = new ArrayList<>();
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                Expense expense = snapshot.getValue(Expense.class);
+                                if (expense != null) {
+                                    expense.setId(snapshot.getKey());
+                                    expense.setAccountId(accountId);
+                                    expenses.add(expense);
+                                }
+                            }
+                            callback.onSuccess(expenses);
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            callback.onError(databaseError.toException());
+                        }
+                    });
+        } else {
+            expensesRef.orderByChild("accountId").equalTo(accountId)
+                    .addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            List<Expense> expenses = new ArrayList<>();
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                Expense expense = snapshot.getValue(Expense.class);
+                                if (expense != null) {
+                                    expense.setId(snapshot.getKey());
+                                    expenses.add(expense);
+                                }
+                            }
+                            callback.onSuccess(expenses);
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            callback.onError(databaseError.toException());
+                        }
+                    });
+        }
+    }
+    
+    private String getUsernameFromAccountId(String accountId) {
+        try {
+            com.google.firebase.database.DatabaseReference accountRef = 
+                com.google.firebase.database.FirebaseDatabase.getInstance("https://campus-expense-manager-c16e3-default-rtdb.asia-southeast1.firebasedatabase.app")
+                    .getReference("accounts").child(accountId);
+            
+            com.google.firebase.database.DataSnapshot snapshot = 
+                com.google.android.gms.tasks.Tasks.await(accountRef.get());
+            
+            if (snapshot.exists()) {
+                com.budgetwise.campusexpensemanager.firebase.models.FirebaseAccount account = 
+                    snapshot.getValue(com.budgetwise.campusexpensemanager.firebase.models.FirebaseAccount.class);
+                return account != null ? account.getUsername() : null;
+            }
+        } catch (Exception e) {
+            android.util.Log.e("ExpenseRepository", "Error getting username from accountId: " + e.getMessage());
+        }
+        return null;
     }
 
     public void getExpenseById(String expenseId, SingleExpenseCallback callback) {
@@ -89,8 +189,56 @@ public class ExpenseRepository {
         });
     }
     
-    public com.google.firebase.database.Query getExpensesByCategoryAndMonth(String userId, String category, int month, int year) {
-        return expensesRef.orderByChild("userId").equalTo(userId);
+    public com.google.firebase.database.Query getExpensesByCategoryAndMonth(String accountId, String category, int month, int year) {
+        String username = getUsernameFromAccountId(accountId);
+        
+        if (username != null) {
+            return expensesRef.orderByChild("userId").equalTo(username);
+        } else {
+            return expensesRef.orderByChild("accountId").equalTo(accountId);
+        }
+    }
+    
+    public com.google.firebase.database.Query getAllExpensesByCategoryAndMonth(String accountId, String category, int month, int year) {
+        String username = getUsernameFromAccountId(accountId);
+        
+        if (username != null) {
+            return expensesRef.orderByChild("userId").equalTo(username);
+        } else {
+            return expensesRef.orderByChild("accountId").equalTo(accountId);
+        }
+    }
+
+    public Task<Void> deleteRecurringExpenseRecords(String accountId) {
+        String username = getUsernameFromAccountId(accountId);
+        
+        if (username != null) {
+            return expensesRef.orderByChild("userId").equalTo(username)
+                    .get().continueWith(task -> {
+                        if (task.isSuccessful()) {
+                            for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                                Expense expense = snapshot.getValue(Expense.class);
+                                if (expense != null && isRecurringExpense(expense)) {
+                                    expensesRef.child(snapshot.getKey()).removeValue();
+                                }
+                            }
+                        }
+                        return null;
+                    });
+        } else {
+            return expensesRef.orderByChild("accountId").equalTo(accountId)
+                    .get().continueWith(task -> {
+                        if (task.isSuccessful()) {
+                            for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                                Expense expense = snapshot.getValue(Expense.class);
+                                if (expense != null && isRecurringExpense(expense)) {
+                                    expensesRef.child(snapshot.getKey()).removeValue();
+                                }
+                            }
+                        }
+                        return null;
+                    });
+        }
     }
 
     public interface ExpenseCallback {

@@ -132,6 +132,8 @@ public class ExpenseActivity extends BaseActivity {
         // Setup year filter spinner
         Calendar cal = Calendar.getInstance();
         int currentYear = cal.get(Calendar.YEAR);
+        int currentMonth = cal.get(Calendar.MONTH); // 0-11
+        
         String[] years = new String[6];
         years[0] = "All Years";
         for (int i = 1; i < 6; i++) {
@@ -141,6 +143,14 @@ public class ExpenseActivity extends BaseActivity {
             android.R.layout.simple_spinner_item, years);
         yearAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         yearFilterSpinner.setAdapter(yearAdapter);
+        
+        // Set default selections to current month and year
+        monthFilterSpinner.setSelection(currentMonth + 1); // +1 because "All Months" is at position 0
+        yearFilterSpinner.setSelection(3); // Current year is at position 3 (currentYear - 2 + 3 = currentYear)
+        
+        // Update the filter state variables
+        selectedMonth = currentMonth;
+        selectedYear = currentYear;
     }
 
     private void setupFilterClickListeners() {
@@ -243,9 +253,9 @@ public class ExpenseActivity extends BaseActivity {
     }
 
     private void loadExpenses() {
-        String userId = sessionManager.getUsername();
-        if (userId != null) {
-            expenseRepository.getExpensesByUser(userId, new ExpenseRepository.ExpenseCallback() {
+        String accountId = sessionManager.getAccountId();
+        if (accountId != null && !accountId.isEmpty()) {
+            expenseRepository.getExpensesByUser(accountId, new ExpenseRepository.ExpenseCallback() {
                 @Override
                 public void onSuccess(List<Expense> expenses) {
                     allExpenses.clear();

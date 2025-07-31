@@ -36,36 +36,44 @@ public class ExpenseAnalyticsRepository extends FirebaseRepository {
     }
 
     public void getMonthlySummary(String accountId, int month, int year, MonthlySummaryCallback callback) {
-        // Get all expenses for the user
         expenseRepository.getExpensesByUser(accountId, new ExpenseRepository.ExpenseCallback() {
             @Override
             public void onSuccess(List<com.budgetwise.campusexpensemanager.models.Expense> expenses) {
-                // Filter expenses for the specified month and year
                 List<com.budgetwise.campusexpensemanager.models.Expense> monthlyExpenses = filterExpensesByMonth(expenses, month, year);
                 
-                // Calculate summary
                 double totalSpent = calculateTotalSpent(monthlyExpenses);
                 Map<String, Double> categoryBreakdown = calculateCategoryBreakdown(monthlyExpenses);
                 
-                // Get budget information
-                getBudgetForMonth(accountId, month, year, budgets -> {
-                    double totalBudget = calculateTotalBudget(budgets);
-                    Map<String, Double> budgetByCategory = calculateBudgetByCategory(budgets);
-                    
-                    MonthlySummary summary = new MonthlySummary(
-                        month, year, totalSpent, totalBudget, 
-                        categoryBreakdown, budgetByCategory, monthlyExpenses
-                    );
-                    
-                    callback.onSuccess(summary);
-                }, e -> {
-                    // If budget fetch fails, create summary without budget data
-                    MonthlySummary summary = new MonthlySummary(
-                        month, year, totalSpent, 0.0, 
-                        categoryBreakdown, new HashMap<>(), monthlyExpenses
-                    );
-                    callback.onSuccess(summary);
-                });
+                // Add recurring expenses to the calculation
+                addRecurringExpensesToSummary(accountId, month, year, totalSpent, categoryBreakdown, 
+                    (recurringTotal, recurringBreakdown) -> {
+                        double finalTotalSpent = totalSpent + recurringTotal;
+                        
+                        // Merge category breakdowns
+                        for (Map.Entry<String, Double> entry : recurringBreakdown.entrySet()) {
+                            String category = entry.getKey();
+                            double currentAmount = categoryBreakdown.getOrDefault(category, 0.0);
+                            categoryBreakdown.put(category, currentAmount + entry.getValue());
+                        }
+                        
+                        getBudgetForMonth(accountId, month, year, budgets -> {
+                            double totalBudget = calculateTotalBudget(budgets);
+                            Map<String, Double> budgetByCategory = calculateBudgetByCategory(budgets);
+                            
+                            MonthlySummary summary = new MonthlySummary(
+                                month, year, finalTotalSpent, totalBudget, 
+                                categoryBreakdown, budgetByCategory, monthlyExpenses
+                            );
+                            
+                            callback.onSuccess(summary);
+                        }, e -> {
+                            MonthlySummary summary = new MonthlySummary(
+                                month, year, finalTotalSpent, 0.0, 
+                                categoryBreakdown, new HashMap<>(), monthlyExpenses
+                            );
+                            callback.onSuccess(summary);
+                        });
+                    });
             }
 
             @Override
@@ -76,7 +84,7 @@ public class ExpenseAnalyticsRepository extends FirebaseRepository {
     }
 
     public void getExpenseTrends(String accountId, int monthsBack, TrendCallback callback) {
-        expenseRepository.getExpensesByUser(accountId, new ExpenseRepository.ExpenseCallback() {
+        expenseRepository.getAllExpensesByUser(accountId, new ExpenseRepository.ExpenseCallback() {
             @Override
             public void onSuccess(List<com.budgetwise.campusexpensemanager.models.Expense> expenses) {
                 List<MonthlyTrend> trends = calculateTrends(expenses, monthsBack);
@@ -91,12 +99,14 @@ public class ExpenseAnalyticsRepository extends FirebaseRepository {
     }
 
     public void getCategoryAnalysis(String accountId, int month, int year, CategoryAnalysisCallback callback) {
-        expenseRepository.getExpensesByUser(accountId, new ExpenseRepository.ExpenseCallback() {
+        expenseRepository.getAllExpensesByUser(accountId, new ExpenseRepository.ExpenseCallback() {
             @Override
             public void onSuccess(List<com.budgetwise.campusexpensemanager.models.Expense> expenses) {
                 List<com.budgetwise.campusexpensemanager.models.Expense> monthlyExpenses = filterExpensesByMonth(expenses, month, year);
                 List<CategoryAnalysis> analysis = calculateCategoryAnalysis(monthlyExpenses);
-                callback.onSuccess(analysis);
+                
+                // Add recurring expenses to category analysis
+                addRecurringExpensesToCategoryAnalysis(accountId, month, year, analysis, callback);
             }
 
             @Override
@@ -107,7 +117,7 @@ public class ExpenseAnalyticsRepository extends FirebaseRepository {
     }
 
     public void getDailyTrends(String accountId, int daysBack, DailyTrendCallback callback) {
-        expenseRepository.getExpensesByUser(accountId, new ExpenseRepository.ExpenseCallback() {
+        expenseRepository.getAllExpensesByUser(accountId, new ExpenseRepository.ExpenseCallback() {
             @Override
             public void onSuccess(List<com.budgetwise.campusexpensemanager.models.Expense> expenses) {
                 List<DailyTrend> trends = calculateDailyTrends(expenses, daysBack);
@@ -171,7 +181,7 @@ public class ExpenseAnalyticsRepository extends FirebaseRepository {
                         List<FirebaseBudget> budgets = new ArrayList<>();
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                             FirebaseBudget budget = snapshot.getValue(FirebaseBudget.class);
-                            if (budget != null) {
+                            if (budget != null && budget.getMonth() == month && budget.getYear() == year) {
                                 budget.setId(snapshot.getKey());
                                 budgets.add(budget);
                             }
@@ -292,6 +302,130 @@ public class ExpenseAnalyticsRepository extends FirebaseRepository {
         // Reverse to show oldest to newest
         java.util.Collections.reverse(trends);
         return trends;
+    }
+
+    private void addRecurringExpensesToSummary(String accountId, int month, int year, 
+                                             double currentTotal, Map<String, Double> currentBreakdown,
+                                             RecurringExpenseCallback callback) {
+        recurringExpenseRepository.getRecurringExpensesByAccount(accountId)
+            .addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
+                @Override
+                public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
+                    double recurringTotal = 0.0;
+                    Map<String, Double> recurringBreakdown = new HashMap<>();
+                    
+                    for (com.google.firebase.database.DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        com.budgetwise.campusexpensemanager.firebase.models.FirebaseRecurringExpense recurringExpense = 
+                            snapshot.getValue(com.budgetwise.campusexpensemanager.firebase.models.FirebaseRecurringExpense.class);
+                        
+                        if (recurringExpense != null && shouldCreateExpenseInMonth(recurringExpense, month, year)) {
+                            double amount = recurringExpense.getAmount();
+                            recurringTotal += amount;
+                            
+                            String category = recurringExpense.getCategory();
+                            double currentAmount = recurringBreakdown.getOrDefault(category, 0.0);
+                            recurringBreakdown.put(category, currentAmount + amount);
+                        }
+                    }
+                    
+                    callback.onRecurringExpensesCalculated(recurringTotal, recurringBreakdown);
+                }
+
+                @Override
+                public void onCancelled(com.google.firebase.database.DatabaseError databaseError) {
+                    callback.onRecurringExpensesCalculated(0.0, new HashMap<>());
+                }
+            });
+    }
+    
+    private boolean shouldCreateExpenseInMonth(com.budgetwise.campusexpensemanager.firebase.models.FirebaseRecurringExpense recurringExpense, int month, int year) {
+        if (recurringExpense.getStartDate() == null || recurringExpense.getEndDate() == null) {
+            return false;
+        }
+        
+        Calendar startDate = Calendar.getInstance();
+        Calendar endDate = Calendar.getInstance();
+        startDate.setTime(recurringExpense.getStartDate());
+        endDate.setTime(recurringExpense.getEndDate());
+        
+        // Create target month start and end dates
+        Calendar targetMonthStart = Calendar.getInstance();
+        targetMonthStart.set(year, month - 1, 1, 0, 0, 0);
+        targetMonthStart.set(Calendar.MILLISECOND, 0);
+        
+        Calendar targetMonthEnd = Calendar.getInstance();
+        targetMonthEnd.set(year, month - 1, targetMonthStart.getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59);
+        targetMonthEnd.set(Calendar.MILLISECOND, 999);
+        
+        // Check if the recurring expense period overlaps with the target month
+        // The recurring expense should be included if:
+        // 1. Start date is before or on the last day of target month AND
+        // 2. End date is after or on the first day of target month
+        boolean shouldInclude = !startDate.after(targetMonthEnd) && !endDate.before(targetMonthStart);
+        
+        return shouldInclude;
+    }
+    
+    private void addRecurringExpensesToCategoryAnalysis(String accountId, int month, int year, 
+                                                       List<CategoryAnalysis> existingAnalysis, 
+                                                       CategoryAnalysisCallback callback) {
+        recurringExpenseRepository.getRecurringExpensesByAccount(accountId)
+            .addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
+                @Override
+                public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
+                    Map<String, CategoryAnalysis> analysisMap = new HashMap<>();
+                    
+                    // Convert existing analysis to map for easy lookup
+                    for (CategoryAnalysis analysis : existingAnalysis) {
+                        analysisMap.put(analysis.getCategory(), analysis);
+                    }
+                    
+                    // Add recurring expenses
+                    for (com.google.firebase.database.DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        com.budgetwise.campusexpensemanager.firebase.models.FirebaseRecurringExpense recurringExpense = 
+                            snapshot.getValue(com.budgetwise.campusexpensemanager.firebase.models.FirebaseRecurringExpense.class);
+                        
+                        if (recurringExpense != null && shouldCreateExpenseInMonth(recurringExpense, month, year)) {
+                            String category = recurringExpense.getCategory();
+                            double amount = recurringExpense.getAmount();
+                            
+                            CategoryAnalysis analysis = analysisMap.get(category);
+                            if (analysis != null) {
+                                // Update existing category
+                                analysis.setTotalAmount(analysis.getTotalAmount() + amount);
+                                analysis.setTransactionCount(analysis.getTransactionCount() + 1);
+                            } else {
+                                // Create new category
+                                analysis = new CategoryAnalysis(category, amount, 1);
+                                analysisMap.put(category, analysis);
+                            }
+                        }
+                    }
+                    
+                    // Recalculate percentages
+                    double totalAmount = 0.0;
+                    for (CategoryAnalysis analysis : analysisMap.values()) {
+                        totalAmount += analysis.getTotalAmount();
+                    }
+                    
+                    for (CategoryAnalysis analysis : analysisMap.values()) {
+                        if (totalAmount > 0) {
+                            analysis.setPercentageOfTotal((analysis.getTotalAmount() / totalAmount) * 100);
+                        }
+                    }
+                    
+                    callback.onSuccess(new ArrayList<>(analysisMap.values()));
+                }
+
+                @Override
+                public void onCancelled(com.google.firebase.database.DatabaseError databaseError) {
+                    callback.onSuccess(existingAnalysis);
+                }
+            });
+    }
+    
+    interface RecurringExpenseCallback {
+        void onRecurringExpensesCalculated(double totalAmount, Map<String, Double> categoryBreakdown);
     }
 
     // Callback interfaces

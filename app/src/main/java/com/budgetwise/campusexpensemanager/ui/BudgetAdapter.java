@@ -112,7 +112,6 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
         }
         
         private void calculateSpentAmount(FirebaseBudget budget, int categoryColor) {
-            // Get expenses for the same user
             expenseRepository.getExpensesByCategoryAndMonth(
                 budget.getAccountId(), 
                 budget.getCategory(), 
@@ -133,13 +132,11 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
                         }
                     }
                     
-                    // Now add recurring expenses for this category and month
                     addRecurringExpensesToSpentAmount(budget, spentAmount, categoryColor);
                 }
                 
                 @Override
                 public void onCancelled(com.google.firebase.database.DatabaseError databaseError) {
-                    // Error loading expenses
                 }
             });
         }

@@ -55,10 +55,13 @@ public class OverviewActivity extends BaseActivity {
     private TextView totalBudgetText;
     private TextView remainingBudgetText;
     private TextView budgetUtilizationText;
+    private TextView budgetedSpendingText;
+    private TextView unbudgetedSpendingText;
     private Spinner monthSpinner;
     private Spinner yearSpinner;
     private LinearProgressIndicator budgetProgressBar;
-    private CardView summaryCard;
+    private CardView spendingSummaryCard;
+    private CardView budgetPerformanceCard;
     private CardView trendsCard;
     private CardView categoryCard;
     private CardView pieChartCard;
@@ -126,6 +129,7 @@ public class OverviewActivity extends BaseActivity {
             setupToolbar("Expense Overview");
             setupDrawer();
             setupRecyclerView();
+            setupPieChart();
             setupMonthYearSpinners();
             setupClickListeners();
             setupGlobalTouchListener();
@@ -145,38 +149,33 @@ public class OverviewActivity extends BaseActivity {
     }
 
     private void initializeViews() {
-        try {
-            totalSpentText = findViewById(R.id.total_spent_text);
-            totalBudgetText = findViewById(R.id.total_budget_text);
-            remainingBudgetText = findViewById(R.id.remaining_budget_text);
-            budgetUtilizationText = findViewById(R.id.budget_utilization_text);
-            monthSpinner = findViewById(R.id.month_spinner);
-            yearSpinner = findViewById(R.id.year_spinner);
-            budgetProgressBar = findViewById(R.id.budget_progress_bar);
-            summaryCard = findViewById(R.id.summary_card);
-            trendsCard = findViewById(R.id.trends_card);
-            categoryCard = findViewById(R.id.category_card);
-            pieChartCard = findViewById(R.id.pie_chart_card);
-            budgetWarningCard = findViewById(R.id.budget_warning_card);
-            categoryRecyclerView = findViewById(R.id.category_recycler_view);
-            emptyStateText = findViewById(R.id.empty_state_text);
-            pieChart = findViewById(R.id.pie_chart);
-            pieChartEmptyText = findViewById(R.id.pie_chart_empty_text);
-                         customLegendContainer = findViewById(R.id.custom_legend_container);
-            budgetWarningsContainer = findViewById(R.id.budget_warnings_container);
-            budgetWarningHeader = findViewById(R.id.budget_warning_header);
-            budgetWarningIndicators = findViewById(R.id.budget_warning_indicators);
-            budgetWarningExpandIcon = findViewById(R.id.budget_warning_expand_icon);
-            tooltipOverlay = findViewById(R.id.tooltip_overlay);
-            tooltipCategoryName = findViewById(R.id.tooltip_category_name);
-            tooltipAmount = findViewById(R.id.tooltip_amount);
-            
-            // Initialize pie chart
-            setupPieChart();
-        } catch (Exception e) {
-            Toast.makeText(this, "Error initializing views: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            throw e;
-        }
+        totalSpentText = findViewById(R.id.total_spent_text);
+        totalBudgetText = findViewById(R.id.total_budget_text);
+        remainingBudgetText = findViewById(R.id.remaining_budget_text);
+        budgetUtilizationText = findViewById(R.id.budget_utilization_text);
+        budgetedSpendingText = findViewById(R.id.budgeted_spending_text);
+        unbudgetedSpendingText = findViewById(R.id.unbudgeted_spending_text);
+        monthSpinner = findViewById(R.id.month_spinner);
+        yearSpinner = findViewById(R.id.year_spinner);
+        budgetProgressBar = findViewById(R.id.budget_progress_bar);
+        spendingSummaryCard = findViewById(R.id.spending_summary_card);
+        budgetPerformanceCard = findViewById(R.id.budget_performance_card);
+        trendsCard = findViewById(R.id.trends_card);
+        categoryCard = findViewById(R.id.category_card);
+        pieChartCard = findViewById(R.id.pie_chart_card);
+        budgetWarningCard = findViewById(R.id.budget_warning_card);
+        categoryRecyclerView = findViewById(R.id.category_recycler_view);
+        emptyStateText = findViewById(R.id.empty_state_text);
+        pieChart = findViewById(R.id.pie_chart);
+        pieChartEmptyText = findViewById(R.id.pie_chart_empty_text);
+        customLegendContainer = findViewById(R.id.custom_legend_container);
+        budgetWarningsContainer = findViewById(R.id.budget_warnings_container);
+        budgetWarningHeader = findViewById(R.id.budget_warning_header);
+        budgetWarningIndicators = findViewById(R.id.budget_warning_indicators);
+        budgetWarningExpandIcon = findViewById(R.id.budget_warning_expand_icon);
+        tooltipOverlay = findViewById(R.id.tooltip_overlay);
+        tooltipCategoryName = findViewById(R.id.tooltip_category_name);
+        tooltipAmount = findViewById(R.id.tooltip_amount);
     }
 
     private void setupRecyclerView() {
@@ -922,29 +921,52 @@ public class OverviewActivity extends BaseActivity {
 
     private void updateSummaryUI(MonthlySummary summary) {
         try {
-            // Update summary card
+            // Update spending summary card (always visible)
             totalSpentText.setText(String.format("$%.2f", summary.getTotalSpent()));
-            totalBudgetText.setText(String.format("$%.2f", summary.getTotalBudget()));
-            remainingBudgetText.setText(String.format("$%.2f", summary.getRemainingBudget()));
+            unbudgetedSpendingText.setText(String.format("$%.2f", summary.getUnbudgetedSpending()));
 
-            // Update budget utilization
-            double utilization = summary.getBudgetUtilization();
-            budgetUtilizationText.setText(String.format("%.1f%%", utilization));
-            
-            // Update progress bar
-            budgetProgressBar.setProgress((int) Math.min(utilization, 100));
-            
-            // Set progress bar color based on utilization
-            if (summary.isOverBudget()) {
-                budgetProgressBar.setIndicatorColor(getResources().getColor(android.R.color.holo_red_dark));
-            } else if (utilization > 80) {
-                budgetProgressBar.setIndicatorColor(getResources().getColor(android.R.color.holo_orange_dark));
+            // Show/hide unbudgeted spending based on whether it exists
+            if (summary.hasUnbudgetedSpending()) {
+                unbudgetedSpendingText.setVisibility(View.VISIBLE);
+                unbudgetedSpendingText.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
             } else {
-                budgetProgressBar.setIndicatorColor(getResources().getColor(android.R.color.holo_green_dark));
+                unbudgetedSpendingText.setVisibility(View.GONE);
+            }
+
+            // Update budget performance card (only show if user has budgets)
+            if (summary.hasBudgets()) {
+                // User has budgets - show budget performance card
+                budgetedSpendingText.setText(String.format("$%.2f", summary.getBudgetedSpending()));
+                totalBudgetText.setText(String.format("$%.2f", summary.getTotalBudget()));
+                
+                double utilization = summary.getBudgetUtilization();
+                budgetUtilizationText.setText(String.format("%.1f%%", utilization));
+                remainingBudgetText.setText(String.format("$%.2f", summary.getRemainingBudget()));
+                
+                // Update progress bar
+                budgetProgressBar.setProgress((int) Math.min(utilization, 100));
+                
+                // Set progress bar color based on utilization
+                if (summary.isOverBudget()) {
+                    budgetProgressBar.setIndicatorColor(getResources().getColor(android.R.color.holo_red_dark));
+                    budgetUtilizationText.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                } else if (utilization > 80) {
+                    budgetProgressBar.setIndicatorColor(getResources().getColor(android.R.color.holo_orange_dark));
+                    budgetUtilizationText.setTextColor(getResources().getColor(android.R.color.holo_orange_dark));
+                } else {
+                    budgetProgressBar.setIndicatorColor(getResources().getColor(android.R.color.holo_green_dark));
+                    budgetUtilizationText.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                }
+                
+                // Show budget performance card
+                budgetPerformanceCard.setVisibility(View.VISIBLE);
+            } else {
+                // User has no budgets - hide budget performance card
+                budgetPerformanceCard.setVisibility(View.GONE);
             }
 
             // Show/hide cards based on data availability
-            summaryCard.setVisibility(View.VISIBLE);
+            spendingSummaryCard.setVisibility(View.VISIBLE);
             trendsCard.setVisibility(View.VISIBLE);
             pieChartCard.setVisibility(View.VISIBLE);
             categoryCard.setVisibility(View.VISIBLE);
@@ -973,7 +995,8 @@ public class OverviewActivity extends BaseActivity {
 
     private void showLoadingState() {
         try {
-            summaryCard.setVisibility(View.GONE);
+            spendingSummaryCard.setVisibility(View.GONE);
+            budgetPerformanceCard.setVisibility(View.GONE);
             trendsCard.setVisibility(View.GONE);
             pieChartCard.setVisibility(View.GONE);
             categoryCard.setVisibility(View.GONE);
@@ -987,7 +1010,8 @@ public class OverviewActivity extends BaseActivity {
 
     private void showErrorState() {
         try {
-            summaryCard.setVisibility(View.GONE);
+            spendingSummaryCard.setVisibility(View.GONE);
+            budgetPerformanceCard.setVisibility(View.GONE);
             trendsCard.setVisibility(View.GONE);
             pieChartCard.setVisibility(View.GONE);
             categoryCard.setVisibility(View.GONE);
