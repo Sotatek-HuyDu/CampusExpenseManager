@@ -57,6 +57,10 @@ public class OverviewActivity extends BaseActivity {
     private TextView budgetUtilizationText;
     private TextView budgetedSpendingText;
     private TextView unbudgetedSpendingText;
+    private TextView recurringSpendingText;
+    private TextView nonRecurringSpendingText;
+    private TextView budgetedRecurringText;
+    private TextView budgetedNonRecurringText;
     private Spinner monthSpinner;
     private Spinner yearSpinner;
     private LinearProgressIndicator budgetProgressBar;
@@ -155,6 +159,10 @@ public class OverviewActivity extends BaseActivity {
         budgetUtilizationText = findViewById(R.id.budget_utilization_text);
         budgetedSpendingText = findViewById(R.id.budgeted_spending_text);
         unbudgetedSpendingText = findViewById(R.id.unbudgeted_spending_text);
+        recurringSpendingText = findViewById(R.id.recurring_spending_text);
+        nonRecurringSpendingText = findViewById(R.id.non_recurring_spending_text);
+        budgetedRecurringText = findViewById(R.id.budgeted_recurring_text);
+        budgetedNonRecurringText = findViewById(R.id.budgeted_non_recurring_text);
         monthSpinner = findViewById(R.id.month_spinner);
         yearSpinner = findViewById(R.id.year_spinner);
         budgetProgressBar = findViewById(R.id.budget_progress_bar);
@@ -924,6 +932,10 @@ public class OverviewActivity extends BaseActivity {
             // Update spending summary card (always visible)
             totalSpentText.setText(String.format("$%.2f", summary.getTotalSpent()));
             unbudgetedSpendingText.setText(String.format("$%.2f", summary.getUnbudgetedSpending()));
+            
+            // Update recurring expense information
+            recurringSpendingText.setText(String.format("$%.2f", summary.getRecurringSpending()));
+            nonRecurringSpendingText.setText(String.format("$%.2f", summary.getNonRecurringSpending()));
 
             // Show/hide unbudgeted spending based on whether it exists
             if (summary.hasUnbudgetedSpending()) {
@@ -938,6 +950,10 @@ public class OverviewActivity extends BaseActivity {
                 // User has budgets - show budget performance card
                 budgetedSpendingText.setText(String.format("$%.2f", summary.getBudgetedSpending()));
                 totalBudgetText.setText(String.format("$%.2f", summary.getTotalBudget()));
+                
+                // Update recurring budget information
+                budgetedRecurringText.setText(String.format("$%.2f", summary.getBudgetedRecurringSpending()));
+                budgetedNonRecurringText.setText(String.format("$%.2f", summary.getNonRecurringBudgetedSpending()));
                 
                 double utilization = summary.getBudgetUtilization();
                 budgetUtilizationText.setText(String.format("%.1f%%", utilization));

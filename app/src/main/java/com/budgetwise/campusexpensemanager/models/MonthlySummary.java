@@ -10,6 +10,8 @@ public class MonthlySummary {
     private double totalBudget;
     private double budgetedSpending;
     private double unbudgetedSpending;
+    private double recurringSpending;
+    private double budgetedRecurringSpending;
     private Map<String, Double> categoryBreakdown;
     private Map<String, Double> budgetByCategory;
     private List<Expense> expenses;
@@ -24,11 +26,14 @@ public class MonthlySummary {
         this.categoryBreakdown = categoryBreakdown;
         this.budgetByCategory = budgetByCategory;
         this.expenses = expenses;
+        this.recurringSpending = 0.0;
+        this.budgetedRecurringSpending = 0.0;
         calculateBudgetedAndUnbudgetedSpending();
     }
 
     public MonthlySummary(int month, int year, double totalSpent, double totalBudget,
                          double budgetedSpending, double unbudgetedSpending,
+                         double recurringSpending, double budgetedRecurringSpending,
                          Map<String, Double> categoryBreakdown, Map<String, Double> budgetByCategory,
                          List<Expense> expenses) {
         this.month = month;
@@ -37,6 +42,8 @@ public class MonthlySummary {
         this.totalBudget = totalBudget;
         this.budgetedSpending = budgetedSpending;
         this.unbudgetedSpending = unbudgetedSpending;
+        this.recurringSpending = recurringSpending;
+        this.budgetedRecurringSpending = budgetedRecurringSpending;
         this.categoryBreakdown = categoryBreakdown;
         this.budgetByCategory = budgetByCategory;
         this.expenses = expenses;
@@ -67,13 +74,32 @@ public class MonthlySummary {
     public double getTotalBudget() { return totalBudget; }
     public double getBudgetedSpending() { return budgetedSpending; }
     public double getUnbudgetedSpending() { return unbudgetedSpending; }
+    public double getRecurringSpending() { return recurringSpending; }
+    public double getBudgetedRecurringSpending() { return budgetedRecurringSpending; }
     public Map<String, Double> getCategoryBreakdown() { return categoryBreakdown; }
     public Map<String, Double> getBudgetByCategory() { return budgetByCategory; }
     public List<Expense> getExpenses() { return expenses; }
 
+    // Setters for recurring spending
+    public void setRecurringSpending(double recurringSpending) {
+        this.recurringSpending = recurringSpending;
+    }
+
+    public void setBudgetedRecurringSpending(double budgetedRecurringSpending) {
+        this.budgetedRecurringSpending = budgetedRecurringSpending;
+    }
+
     // Calculated properties
     public double getRemainingBudget() {
         return Math.max(0, totalBudget - budgetedSpending);
+    }
+
+    public double getNonRecurringSpending() {
+        return totalSpent - recurringSpending;
+    }
+
+    public double getNonRecurringBudgetedSpending() {
+        return budgetedSpending - budgetedRecurringSpending;
     }
 
     public double getBudgetUtilization() {

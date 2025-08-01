@@ -65,6 +65,32 @@
             app:cornerRadius="8dp"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reset_password_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Reset Password"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:drawableStart="@drawable/setting"
+            android:drawablePadding="8dp"
+            app:cornerRadius="8dp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_marginTop="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/give_feedback_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Give Feedback"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:drawableStart="@drawable/ic_email"
+            android:drawablePadding="8dp"
+            app:cornerRadius="8dp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_marginTop="8dp" />
+
     </LinearLayout>
 
     <!-- Navigation Menu -->

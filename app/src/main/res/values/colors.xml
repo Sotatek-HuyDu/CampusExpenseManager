@@ -5,6 +5,7 @@
     <color name="linkBlue">#1976D2</color>
     <color name="primary">#2C3E50</color>
     <color name="secondary">#3498DB</color>
+    <color name="tertiary">#E67E22</color>
     <color name="onPrimary">#FFFFFF</color>
     <color name="navBackground">#2C3E50</color>
     <color name="navText">#333333</color>

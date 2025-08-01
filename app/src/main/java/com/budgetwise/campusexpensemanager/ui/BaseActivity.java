@@ -122,6 +122,24 @@ public abstract class BaseActivity extends AppCompatActivity {
             });
         }
         
+        // Set up reset password button
+        MaterialButton resetPasswordButton = drawerContent.findViewById(R.id.reset_password_button);
+        if (resetPasswordButton != null) {
+            resetPasswordButton.setOnClickListener(v -> {
+                showPasswordResetDialog();
+                drawerLayout.closeDrawer(GravityCompat.END);
+            });
+        }
+        
+        // Set up give feedback button
+        MaterialButton giveFeedbackButton = drawerContent.findViewById(R.id.give_feedback_button);
+        if (giveFeedbackButton != null) {
+            giveFeedbackButton.setOnClickListener(v -> {
+                showFeedbackDialog();
+                drawerLayout.closeDrawer(GravityCompat.END);
+            });
+        }
+        
         // Set up navigation item selected listener for future menu items
         NavigationView navigationView = drawerContent.findViewById(R.id.navigation_view);
         if (navigationView != null) {
@@ -470,4 +488,278 @@ public abstract class BaseActivity extends AppCompatActivity {
                 });
         }
     }
+    
+    private String generatedResetCode = null;
+    
+    private void showPasswordResetDialog() {
+        String userEmail = sessionManager.getUserEmail();
+        if (userEmail == null || userEmail.isEmpty()) {
+            Toast.makeText(this, "Please add an email address first", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Generate a 4-digit code
+        generatedResetCode = String.format("%04d", (int)(Math.random() * 10000));
+        
+        // Create custom dialog layout
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_password_reset, null);
+        
+        // Get references to views
+        com.google.android.material.textfield.TextInputEditText codeInput = dialogView.findViewById(R.id.code_input);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btn_cancel);
+        com.google.android.material.button.MaterialButton btnValidate = dialogView.findViewById(R.id.btn_validate);
+        
+        // Create dialog
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .create();
+        
+        // Set button click listeners
+        btnCancel.setOnClickListener(v -> {
+            generatedResetCode = null;
+            dialog.dismiss();
+        });
+        
+        btnValidate.setOnClickListener(v -> {
+            String code = codeInput.getText().toString().trim();
+            
+            if (TextUtils.isEmpty(code)) {
+                codeInput.setError("Please enter the code");
+                return;
+            }
+            
+            if (code.length() != 4) {
+                codeInput.setError("Code must be 4 digits");
+                return;
+            }
+            
+            validateResetCode(code, dialog);
+        });
+        
+        dialog.show();
+        
+        // Send reset email
+        sendResetEmail(userEmail, generatedResetCode);
+    }
+    
+
+    
+    private void validateResetCode(String code, AlertDialog currentDialog) {
+        if (generatedResetCode != null && code.equals(generatedResetCode)) {
+            generatedResetCode = null;
+            currentDialog.dismiss();
+            showNewPasswordDialog();
+        } else {
+            Toast.makeText(this, "Invalid code. Please check your email and try again.", Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private void showNewPasswordDialog() {
+        // Create custom dialog layout
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_new_password, null);
+        
+        // Get references to views
+        com.google.android.material.textfield.TextInputEditText newPasswordInput = dialogView.findViewById(R.id.new_password_input);
+        com.google.android.material.textfield.TextInputEditText confirmPasswordInput = dialogView.findViewById(R.id.confirm_password_input);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btn_cancel);
+        com.google.android.material.button.MaterialButton btnSave = dialogView.findViewById(R.id.btn_save);
+        
+        // Create dialog
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .create();
+        
+        // Set button click listeners
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        
+        btnSave.setOnClickListener(v -> {
+            String newPassword = newPasswordInput.getText().toString().trim();
+            String confirmPassword = confirmPasswordInput.getText().toString().trim();
+            
+            if (TextUtils.isEmpty(newPassword)) {
+                newPasswordInput.setError("Please enter a new password");
+                return;
+            }
+            
+            if (newPassword.length() < 6) {
+                newPasswordInput.setError("Password must be at least 6 characters");
+                return;
+            }
+            
+            if (!newPassword.equals(confirmPassword)) {
+                confirmPasswordInput.setError("Passwords do not match");
+                return;
+            }
+            
+            // Update password
+            updatePassword(newPassword, dialog);
+        });
+        
+        dialog.show();
+    }
+    
+    private void updatePassword(String newPassword, AlertDialog dialog) {
+        String accountId = sessionManager.getAccountId();
+        if (accountId == null) {
+            Toast.makeText(this, "No user logged in", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
+            return;
+        }
+        
+        // Check if new password is same as current password
+        checkCurrentPasswordAndUpdate(newPassword, dialog);
+    }
+    
+    private void checkCurrentPasswordAndUpdate(String newPassword, AlertDialog dialog) {
+        String accountId = sessionManager.getAccountId();
+        
+        // Get current password from Firebase
+        com.google.firebase.database.FirebaseDatabase database = com.google.firebase.database.FirebaseDatabase.getInstance("https://campus-expense-manager-c16e3-default-rtdb.asia-southeast1.firebasedatabase.app");
+        database.getReference("accounts").child(accountId).child("password").get()
+            .addOnSuccessListener(dataSnapshot -> {
+                String currentHashedPassword = dataSnapshot.getValue(String.class);
+                
+                if (currentHashedPassword != null) {
+                    // Hash the new password to compare
+                    String newHashedPassword = com.budgetwise.campusexpensemanager.utils.PasswordHasher.hashPassword(newPassword);
+                    
+                    // Check if passwords are the same
+                    if (newHashedPassword.equals(currentHashedPassword)) {
+                        Toast.makeText(this, "New password cannot be the same as current password", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+                
+                // Passwords are different, proceed with update
+                performPasswordUpdate(newPassword, dialog);
+            })
+            .addOnFailureListener(e -> {
+                Toast.makeText(this, "Error checking current password: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+    }
+    
+    private void performPasswordUpdate(String newPassword, AlertDialog dialog) {
+        String accountId = sessionManager.getAccountId();
+        
+        // Hash the new password
+        String hashedPassword = com.budgetwise.campusexpensemanager.utils.PasswordHasher.hashPassword(newPassword);
+        
+        // Update password in Firebase database
+        com.google.firebase.database.FirebaseDatabase database = com.google.firebase.database.FirebaseDatabase.getInstance("https://campus-expense-manager-c16e3-default-rtdb.asia-southeast1.firebasedatabase.app");
+        database.getReference("accounts").child(accountId).child("password").setValue(hashedPassword)
+            .addOnSuccessListener(aVoid -> {
+                Toast.makeText(this, "Password updated successfully!", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            })
+            .addOnFailureListener(e -> {
+                Toast.makeText(this, "Failed to update password: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+    }
+    
+    private void sendResetEmail(String userEmail, String resetCode) {
+        // Show loading message
+        Toast.makeText(this, "Sending reset code to your email...", Toast.LENGTH_SHORT).show();
+        
+        // Send email using EmailService
+        com.budgetwise.campusexpensemanager.utils.EmailService.sendPasswordResetEmail(this, userEmail, resetCode, 
+            new com.budgetwise.campusexpensemanager.utils.EmailService.EmailCallback() {
+                @Override
+                public void onSuccess() {
+                    runOnUiThread(() -> {
+                        Toast.makeText(BaseActivity.this, "Reset code sent to " + userEmail, Toast.LENGTH_LONG).show();
+                    });
+                }
+                
+                @Override
+                public void onFailure(String error) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(BaseActivity.this, "Failed to send email: " + error, Toast.LENGTH_LONG).show();
+                        // Fallback: show code in toast for testing
+                        Toast.makeText(BaseActivity.this, "Reset code: " + resetCode, Toast.LENGTH_LONG).show();
+                    });
+                }
+            });
+    }
+    
+    private void showFeedbackDialog() {
+        // Create custom dialog layout
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_feedback, null);
+        
+        // Get references to views
+        android.widget.RatingBar ratingOverall = dialogView.findViewById(R.id.rating_overall);
+        android.widget.RatingBar ratingDesign = dialogView.findViewById(R.id.rating_design);
+        android.widget.RatingBar ratingNavigation = dialogView.findViewById(R.id.rating_navigation);
+        android.widget.RatingBar ratingFunctionality = dialogView.findViewById(R.id.rating_functionality);
+        android.widget.RatingBar ratingRecommendation = dialogView.findViewById(R.id.rating_recommendation);
+        com.google.android.material.textfield.TextInputEditText feedbackInput = dialogView.findViewById(R.id.feedback_input);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btn_cancel);
+        com.google.android.material.button.MaterialButton btnSubmit = dialogView.findViewById(R.id.btn_submit);
+        
+        // Create dialog
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .create();
+        
+        // Set button click listeners
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        
+        btnSubmit.setOnClickListener(v -> {
+            // Collect all ratings
+            float overallRating = ratingOverall.getRating();
+            float designRating = ratingDesign.getRating();
+            float navigationRating = ratingNavigation.getRating();
+            float functionalityRating = ratingFunctionality.getRating();
+            float recommendationRating = ratingRecommendation.getRating();
+            String feedback = feedbackInput.getText().toString().trim();
+            
+            // Show loading state
+            btnSubmit.setEnabled(false);
+            btnSubmit.setText("Sending...");
+            
+            // Send feedback email
+            sendFeedbackEmail(overallRating, designRating, navigationRating, functionalityRating, recommendationRating, feedback, dialog, btnSubmit);
+        });
+        
+        dialog.show();
+    }
+    
+    private void sendFeedbackEmail(float ratingOverall, float ratingDesign, float ratingNavigation, float ratingFunctionality, float ratingRecommendation, String feedback, AlertDialog dialog, com.google.android.material.button.MaterialButton btnSubmit) {
+        String userEmail = sessionManager.getUserEmail();
+        String userName = sessionManager.getUsername();
+        if (userEmail == null || userEmail.isEmpty()) {
+            userEmail = "anonymous@user.com";
+        }
+        if (userName == null || userName.isEmpty()) {
+            userName = "Anonymous User";
+        }
+        
+        // Show loading message
+        Toast.makeText(this, "Sending feedback...", Toast.LENGTH_SHORT).show();
+        
+        // Send feedback using EmailService
+        com.budgetwise.campusexpensemanager.utils.EmailService.sendFeedbackEmail(this, userEmail, userName, ratingOverall, ratingDesign, ratingNavigation, ratingFunctionality, ratingRecommendation, feedback, 
+            new com.budgetwise.campusexpensemanager.utils.EmailService.EmailCallback() {
+                @Override
+                public void onSuccess() {
+                    runOnUiThread(() -> {
+                        Toast.makeText(BaseActivity.this, "Thank you for your feedback!", Toast.LENGTH_LONG).show();
+                        dialog.dismiss();
+                    });
+                }
+                
+                @Override
+                public void onFailure(String error) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(BaseActivity.this, "Failed to send feedback: " + error, Toast.LENGTH_LONG).show();
+                        btnSubmit.setEnabled(true);
+                        btnSubmit.setText("Submit");
+                    });
+                }
+            });
+    }
+    
+
 } 

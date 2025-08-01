@@ -46,7 +46,7 @@ public class ExpenseAnalyticsRepository extends FirebaseRepository {
                 
                 // Add recurring expenses to the calculation
                 addRecurringExpensesToSummary(accountId, month, year, totalSpent, categoryBreakdown, 
-                    (recurringTotal, recurringBreakdown) -> {
+                    (recurringTotal, recurringBreakdown, budgetedRecurringTotal) -> {
                         double finalTotalSpent = totalSpent + recurringTotal;
                         
                         // Merge category breakdowns
@@ -65,12 +65,21 @@ public class ExpenseAnalyticsRepository extends FirebaseRepository {
                                 categoryBreakdown, budgetByCategory, monthlyExpenses
                             );
                             
+                            // Set recurring spending values
+                            summary.setRecurringSpending(recurringTotal);
+                            summary.setBudgetedRecurringSpending(budgetedRecurringTotal);
+                            
                             callback.onSuccess(summary);
                         }, e -> {
                             MonthlySummary summary = new MonthlySummary(
                                 month, year, finalTotalSpent, 0.0, 
                                 categoryBreakdown, new HashMap<>(), monthlyExpenses
                             );
+                            
+                            // Set recurring spending values
+                            summary.setRecurringSpending(recurringTotal);
+                            summary.setBudgetedRecurringSpending(budgetedRecurringTotal);
+                            
                             callback.onSuccess(summary);
                         });
                     });
@@ -328,16 +337,47 @@ public class ExpenseAnalyticsRepository extends FirebaseRepository {
                         }
                     }
                     
-                    callback.onRecurringExpensesCalculated(recurringTotal, recurringBreakdown);
+                    // Calculate budgeted recurring expenses
+                    final double finalRecurringTotal = recurringTotal;
+                    final Map<String, Double> finalRecurringBreakdown = new HashMap<>(recurringBreakdown);
+                    calculateBudgetedRecurringExpenses(accountId, month, year, recurringBreakdown, 
+                        budgetedRecurringTotal -> {
+                            callback.onRecurringExpensesCalculated(finalRecurringTotal, finalRecurringBreakdown, budgetedRecurringTotal);
+                        });
                 }
 
                 @Override
                 public void onCancelled(com.google.firebase.database.DatabaseError databaseError) {
-                    callback.onRecurringExpensesCalculated(0.0, new HashMap<>());
+                    callback.onRecurringExpensesCalculated(0.0, new HashMap<>(), 0.0);
                 }
             });
     }
     
+    private void calculateBudgetedRecurringExpenses(String accountId, int month, int year, 
+                                                  Map<String, Double> recurringBreakdown,
+                                                  java.util.function.Consumer<Double> callback) {
+        getBudgetForMonth(accountId, month, year, budgets -> {
+            double budgetedRecurringTotal = 0.0;
+            
+            for (Map.Entry<String, Double> entry : recurringBreakdown.entrySet()) {
+                String category = entry.getKey();
+                double recurringAmount = entry.getValue();
+                
+                // Check if this category has a budget
+                for (FirebaseBudget budget : budgets) {
+                    if (budget.getCategory().equals(category)) {
+                        budgetedRecurringTotal += recurringAmount;
+                        break;
+                    }
+                }
+            }
+            
+            callback.accept(budgetedRecurringTotal);
+        }, e -> {
+            callback.accept(0.0);
+        });
+    }
+
     private boolean shouldCreateExpenseInMonth(com.budgetwise.campusexpensemanager.firebase.models.FirebaseRecurringExpense recurringExpense, int month, int year) {
         if (recurringExpense.getStartDate() == null || recurringExpense.getEndDate() == null) {
             return false;
@@ -425,7 +465,7 @@ public class ExpenseAnalyticsRepository extends FirebaseRepository {
     }
     
     interface RecurringExpenseCallback {
-        void onRecurringExpensesCalculated(double totalAmount, Map<String, Double> categoryBreakdown);
+        void onRecurringExpensesCalculated(double totalAmount, Map<String, Double> categoryBreakdown, double budgetedRecurringTotal);
     }
 
     // Callback interfaces

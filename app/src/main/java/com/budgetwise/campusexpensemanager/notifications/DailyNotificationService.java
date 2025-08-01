@@ -86,10 +86,13 @@ public class DailyNotificationService {
         calendar.set(Calendar.HOUR_OF_DAY, 6);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
         
         if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
             calendar.add(Calendar.DAY_OF_YEAR, 1);
         }
+        
+
         
         Intent intent = new Intent(context, MorningNotificationReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
@@ -98,7 +101,7 @@ public class DailyNotificationService {
         );
         
         alarmManager.setRepeating(
-            AlarmManager.RTC_WAKEUP,
+            AlarmManager.RTC,
             calendar.getTimeInMillis(),
             AlarmManager.INTERVAL_DAY,
             pendingIntent
@@ -112,10 +115,13 @@ public class DailyNotificationService {
         calendar.set(Calendar.HOUR_OF_DAY, 21);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
         
         if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
             calendar.add(Calendar.DAY_OF_YEAR, 1);
         }
+        
+
         
         Intent intent = new Intent(context, EveningNotificationReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
@@ -124,7 +130,7 @@ public class DailyNotificationService {
         );
         
         alarmManager.setRepeating(
-            AlarmManager.RTC_WAKEUP,
+            AlarmManager.RTC,
             calendar.getTimeInMillis(),
             AlarmManager.INTERVAL_DAY,
             pendingIntent

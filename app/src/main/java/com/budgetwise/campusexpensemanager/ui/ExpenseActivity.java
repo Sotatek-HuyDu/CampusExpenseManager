@@ -146,7 +146,7 @@ public class ExpenseActivity extends BaseActivity {
         
         // Set default selections to current month and year
         monthFilterSpinner.setSelection(currentMonth + 1); // +1 because "All Months" is at position 0
-        yearFilterSpinner.setSelection(3); // Current year is at position 3 (currentYear - 2 + 3 = currentYear)
+        yearFilterSpinner.setSelection(2); // Current year is at position 2 (currentYear - 2 + 2 = currentYear)
         
         // Update the filter state variables
         selectedMonth = currentMonth;
